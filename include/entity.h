@@ -1,0 +1,28 @@
+#pragma once
+
+#include "mesh.h"
+#include "material.h"
+
+#include <memory>
+
+class Entity {
+public:
+	Entity();
+	Entity(std::shared_ptr<Shader> basicShader, std::shared_ptr<Mesh> mesh) : m_basicShader(basicShader), m_mesh(mesh) {}
+	Entity(std::shared_ptr<Mesh> mesh, std::shared_ptr<Material> material) : m_mesh(mesh), m_material(material) {}
+
+	void draw(const glm::mat4& view, const glm::mat4& projection);
+
+	void setMesh(std::shared_ptr<Mesh> mesh) { m_mesh = mesh; }
+	void setMaterial(std::shared_ptr<Material> material) { m_material = material; }
+
+	glm::vec3 position = glm::vec3(0.0f);
+	glm::vec3 rotation = glm::vec3(0.0f);
+	glm::vec3 scale = glm::vec3(1.0f);
+
+private:
+	std::shared_ptr<Mesh> m_mesh;
+	std::shared_ptr<Material> m_material;
+
+	std::shared_ptr<Shader> m_basicShader;
+};
