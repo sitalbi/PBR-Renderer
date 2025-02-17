@@ -3,7 +3,7 @@
 #include "glm/glm.hpp"
 
 /**
- * Vertex attributes
+	Vertex attributes
 */
 struct Vertex {
     glm::vec3 m_position;

@@ -43,9 +43,6 @@ void Renderer::init()
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
-	m_camera = std::make_unique<Camera>(window_width, window_height, glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
-	m_camera->setPosition(glm::vec3(0.0f, 0.0f, 3.0f));
-
 	m_initialized = true;
 }
 
@@ -65,10 +62,6 @@ void Renderer::render()
 
 void Renderer::update()
 {
-	if (glfwWindowShouldClose(m_window)) {
-		shutdown();
-	}
-
 	clear();
 	render();
 	swapBuffers();
@@ -76,11 +69,11 @@ void Renderer::update()
 
 void Renderer::shutdown()
 {
+	glfwDestroyWindow(m_window);
 	glfwTerminate();
 }
 
 void Renderer::swapBuffers()
 {
 	glfwSwapBuffers(m_window);
-	glfwPollEvents();
 }

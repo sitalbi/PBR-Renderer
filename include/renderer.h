@@ -21,6 +21,8 @@ public:
 
 	void addEntity(std::shared_ptr<Entity> entity) { m_entities.push_back(entity); }
 
+	void setCamera(Camera* camera) { m_camera = camera; }
+
 	std::shared_ptr<Shader> getBasicShader() { return m_basicShader; }
 
 	GLFWwindow* getWindow() { return m_window; }
@@ -28,7 +30,7 @@ public:
 private:
 	GLFWwindow* m_window;
 
-	std::unique_ptr<Camera> m_camera;
+	Camera* m_camera;
 
 	bool m_initialized = false;
 
