@@ -1,10 +1,4 @@
-# OpenGL project template
+# Physics Based Renderer
 
-Template for OpenGL project configured with CMAKE.
-
-Dependencies:
-- GLAD (OpenGL loading library)
-- GLFW (Windows API)
-- GLM (OpenGL Mathematics)
-- ImGUI (UI)
-- STB (Image Loader) 
+This is a simple physics based renderer written in C++ and OpenGL.
+It implements the [Cook-Torrance BRDF microfacet model](http://www.codinglabs.net/article_physically_based_rendering_cook_torrance.aspx) to simulate the reflection of light on a surface.

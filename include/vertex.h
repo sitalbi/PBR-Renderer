@@ -2,7 +2,7 @@
 
 #include "glm/glm.hpp"
 
-/**
+/*
 	Vertex attributes
 */
 struct Vertex {

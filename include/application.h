@@ -13,6 +13,9 @@ public:
 	void run();
 	void init();
 	void shutdown();
+
+	std::shared_ptr<Mesh> getMesh(MeshType type) { return m_meshes[type]; }
+
 private:
 	std::unique_ptr<Renderer> m_renderer;
 	Camera m_camera;
@@ -22,8 +25,12 @@ private:
 
 	std::shared_ptr<Shader> m_basicShader;
 
-	std::shared_ptr<Mesh> m_basicMesh;
+	std::unordered_map<MeshType, std::shared_ptr<Mesh>> m_meshes;
 
+	std::shared_ptr<Material> m_basicMaterial;
+
+	void initUI();
+	void updateUI();
 	void processInput();
 	void setCallbacks();
 };

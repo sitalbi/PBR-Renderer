@@ -1,6 +1,7 @@
 #pragma once
 
 #include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 class Camera
 {
@@ -36,6 +37,9 @@ public:
 
 	void zoom(float yoffset);
 
+	double lastX;
+	double lastY;
+
 private:
 	unsigned int m_width, m_height;
 
@@ -56,4 +60,5 @@ private:
 
 	float m_farClippingPlane = 100.0f;
 	float m_nearClippingPlane = 0.1f;
+
 };

@@ -11,12 +11,17 @@ public:
 	// Constructor for entity with a basic shader and a mesh
 	Entity(std::shared_ptr<Shader> basicShader, std::shared_ptr<Mesh> mesh) : m_basicShader(basicShader), m_mesh(mesh) {}
 	// Constructor for entity with a mesh and a material (PBR)
-	Entity(std::shared_ptr<Mesh> mesh, std::shared_ptr<Material> material) : m_mesh(mesh), m_material(material) {}
+	Entity(std::shared_ptr<Mesh> mesh, Material material, glm::vec3 position) : m_mesh(mesh), m_material(material), position(position), useMaterial(true) {}
 
 	void draw(const glm::mat4& view, const glm::mat4& projection);
 
 	void setMesh(std::shared_ptr<Mesh> mesh) { m_mesh = mesh; }
-	void setMaterial(std::shared_ptr<Material> material) { m_material = material; }
+
+	void setMaterial(Material material) { m_material = material; }
+	Material& getMaterial() { return m_material; }
+
+	void setName(std::string name) { m_name = name; }
+	std::string getName() { return m_name; }
 
 	glm::vec3 position = glm::vec3(0.0f);
 	glm::vec3 rotation = glm::vec3(0.0f);
@@ -24,7 +29,11 @@ public:
 
 private:
 	std::shared_ptr<Mesh> m_mesh;
-	std::shared_ptr<Material> m_material;
+	Material m_material;
 
 	std::shared_ptr<Shader> m_basicShader;
+
+	bool useMaterial = false;
+
+	std::string m_name;
 };

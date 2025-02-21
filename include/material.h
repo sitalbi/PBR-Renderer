@@ -19,7 +19,7 @@ struct Material {
 	float ao = 1.0f;
 	glm::vec3 emissiveColor = glm::vec3(0.0f);
 
-	// Textures
+	// Textures (not implemented yet)
 	/*std::shared_ptr<Texture> albedoMap;
 	std::shared_ptr<Texture> normalMap;
 	std::shared_ptr<Texture> metalRoughMap;
