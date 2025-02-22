@@ -23,6 +23,10 @@ private:
 	double m_lastX, m_lastY;
 	bool m_firstMouse = true;
 
+	float m_deltaTime = 0.0f;
+	float m_lastFrame = 0.0f;
+	float m_currentFrame = 0.0f;
+
 	std::shared_ptr<Shader> m_basicShader;
 
 	std::unordered_map<MeshType, std::shared_ptr<Mesh>> m_meshes;
@@ -31,6 +35,8 @@ private:
 
 	void initUI();
 	void updateUI();
-	void processInput();
+	void processInput(float deltaTime);
 	void setCallbacks();
+
+	void deltaTime();
 };

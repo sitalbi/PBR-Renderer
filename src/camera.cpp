@@ -11,7 +11,8 @@ Camera::Camera(int width, int height, glm::vec3 up, float yaw, float pitch)
 	m_worldUp = up;
 	m_yaw = yaw;
 	m_pitch = pitch;
-	m_target = glm::vec3(0.0f);
+	m_target = nullptr;
+	m_position = glm::vec3(0.0f, 0.0f, -5.0f);
 	updateCameraVectors();
 }
 
@@ -33,6 +34,13 @@ void Camera::setDistance(float distance) {
 void Camera::setPosition(glm::vec3 position)
 {
 	m_position = position;
+	updateCameraVectors();
+}
+
+void Camera::setTarget(std::shared_ptr<Entity> target)
+{
+	m_target = target;
+	updateCameraVectors();
 }
 
 void Camera::updateCameraVectors() {
@@ -44,28 +52,45 @@ void Camera::updateCameraVectors() {
 
 	m_right = glm::normalize(glm::cross(m_forward, m_worldUp));
 	m_up = glm::normalize(glm::cross(m_right, m_forward));
-	m_position = m_target - m_forward * m_distance;
+	if (m_target) {
+		m_position = m_target->position - m_forward * m_distance;
+	}
 }
 
-void Camera::orbit(float xoffset, float yoffset)
+void Camera::lookRotate(float deltaTime, float xoffset, float yoffset)
 {
-	m_yaw += xoffset * m_sensivity;
-	m_pitch += yoffset * m_sensivity;
+	m_yaw += xoffset * m_sensivity * deltaTime;
+	m_pitch += yoffset * m_sensivity * deltaTime;
 
 	m_pitch = glm::clamp(m_pitch, -89.0f, 89.0f);
 
 	updateCameraVectors();
 }
 
-void Camera::pan(float xoffset, float yoffset)
-{
-	m_position += (m_right * xoffset + m_up * yoffset) * m_sensivity;
-	m_target += (m_right * xoffset + m_up * yoffset) * m_sensivity;
-}
-
 void Camera::zoom(float yoffset)
 {
 	m_distance -= yoffset;
-	m_distance = glm::clamp(m_distance, 1.5f, 100.0f);
+	m_distance = glm::clamp(m_distance, 1.0f, 100.0f);
 	updateCameraVectors();
 }
+
+void Camera::moveForward(float deltaTime)
+{
+	m_position += m_forward * m_speed * deltaTime;
+}
+
+void Camera::moveBackward(float deltaTime)
+{
+	m_position -= m_forward * m_speed * deltaTime;
+}
+
+void Camera::moveRight(float deltaTime)
+{
+	m_position += m_right * m_speed * deltaTime;
+}
+
+void Camera::moveLeft(float deltaTime)
+{
+	m_position -= m_right * m_speed * deltaTime;
+}
+

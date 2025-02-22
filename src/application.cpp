@@ -22,11 +22,13 @@ void Application::run()
 {
 	while (!glfwWindowShouldClose(m_renderer->getWindow()))
 	{
+		deltaTime();
+
 		updateUI();
 		m_renderer->update();
 		glfwPollEvents();
 
-		processInput();
+		processInput(m_deltaTime);
 	}
 	shutdown();
 }
@@ -90,6 +92,7 @@ void Application::initUI()
 
 void Application::updateUI()
 {
+	Camera* cam = m_renderer->getCamera();
 	std::unique_ptr<Scene>& currentScene = m_renderer->getCurrentScene();
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -124,7 +127,24 @@ void Application::updateUI()
 				ImGui::InputFloat3("Position", glm::value_ptr(entity->position));
 				ImGui::InputFloat3("Rotation", glm::value_ptr(entity->rotation));
 				ImGui::InputFloat3("Scale", glm::value_ptr(entity->scale));
+
+				if (ImGui::Button("Reset Transform")) {
+					entity->position = glm::vec3(0.0f);
+					entity->rotation = glm::vec3(0.0f);
+					entity->scale = glm::vec3(1.0f);
+				}
 				ImGui::TreePop();
+			}
+			
+			if (cam->hasTarget() && cam->getTarget() == entity) {
+				if (ImGui::Button("Unfollow")) {
+					cam->setTarget(nullptr);
+				}
+			}
+			else {
+				if (ImGui::Button("Follow")) {
+					cam->setTarget(entity);
+				}
 			}
 			if (ImGui::Button("Delete Entity")) {
 				currentScene->deleteEntity(entity);
@@ -133,15 +153,21 @@ void Application::updateUI()
 		}
 	}
 
-	// Add Entity 
+
 	bool& isAddingEntity = currentScene->getIsAddingEntity();
 	glm::vec3& newPosition = currentScene->getNewEntityPosition();
 
-	if (ImGui::Button("Add Entity")) {
+	// Add entity button
+	if (ImGui::Button("Add new Entity")) {
 		isAddingEntity = true;  
 	}
 
+	ImGui::End();
+
 	if (isAddingEntity) {
+		ImGui::SetNextWindowPos(ImVec2(100, 600), ImGuiCond_Always);
+
+		ImGui::Begin("Create Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::InputFloat3("Position", glm::value_ptr(newPosition));
 
 		if (ImGui::Button("Confirm Entity")) {
@@ -161,12 +187,12 @@ void Application::updateUI()
 			isAddingEntity = false;
 			newPosition = glm::vec3(0.0f); 
 		}
+		ImGui::End();
 	}
 
-	ImGui::End();
 }
 
-void Application::processInput()
+void Application::processInput(float deltaTime)
 {
 	if (glfwGetKey(m_renderer->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(m_renderer->getWindow(), true); 
@@ -182,9 +208,10 @@ void Application::processInput()
 	lastX = xpos;
 	lastY = ypos;
 
+	Camera* cam = m_renderer->getCamera();
 	if (glfwGetMouseButton(m_renderer->getWindow(), GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
-		Camera* cam = m_renderer->getCamera();
-		cam->orbit(xoffset, yoffset);
+		
+		cam->lookRotate(deltaTime, xoffset, yoffset);
 
 		// Hide cursor
 		glfwSetInputMode(m_renderer->getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -192,6 +219,22 @@ void Application::processInput()
 	else if (glfwGetMouseButton(m_renderer->getWindow(), GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE) {
 		// Show cursor
 		glfwSetInputMode(m_renderer->getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
+
+	if (!cam->hasTarget()) {
+		// if wasd keys are pressed, move the camera
+		if (glfwGetKey(m_renderer->getWindow(), GLFW_KEY_W) == GLFW_PRESS) {
+			cam->moveForward(deltaTime);
+		}
+		if (glfwGetKey(m_renderer->getWindow(), GLFW_KEY_S) == GLFW_PRESS) {
+			cam->moveBackward(deltaTime);
+		}
+		if (glfwGetKey(m_renderer->getWindow(), GLFW_KEY_A) == GLFW_PRESS) {
+			cam->moveLeft(deltaTime);
+		}
+		if (glfwGetKey(m_renderer->getWindow(), GLFW_KEY_D) == GLFW_PRESS) {
+			cam->moveRight(deltaTime);
+		}
 	}
 }
 
@@ -205,5 +248,12 @@ void Application::setCallbacks()
 		Camera* cam = static_cast<Camera*>(glfwGetWindowUserPointer(window));
 		cam->zoom(yoffset);
 	});
+}
+
+void Application::deltaTime()
+{
+	m_currentFrame = glfwGetTime();
+	m_deltaTime = m_currentFrame - m_lastFrame;
+	m_lastFrame = m_currentFrame;
 }
 
