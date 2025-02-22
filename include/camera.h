@@ -59,7 +59,7 @@ public:
 private:
 	unsigned int m_width, m_height;
 
-	float m_sensivity = 30.0f;
+	float m_sensivity = 10.0f;
 
 	glm::vec3 m_position;
 	glm::vec3 m_forward;
