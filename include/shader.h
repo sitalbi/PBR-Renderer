@@ -30,6 +30,7 @@ public:
 	void setUniform2f(const std::string& name, float v0, float v1);
 	void setUniform3f(const std::string& name, float v0, float v1, float v2);
 	void setUniform4f(const std::string& name, float v0, float v1, float v2, float v3);
+	void setUniformMat3f(const std::string& name, const glm::mat3& matrix);
 	void setUniformMat4f(const std::string& name, const glm::mat4& matrix);
 	void setUniformBool(const std::string& name, bool value);
 };

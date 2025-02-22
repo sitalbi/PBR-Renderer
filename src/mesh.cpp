@@ -1,6 +1,7 @@
 #include "mesh.h"
 #include "glad/glad.h"
 #include "glm/gtc/matrix_transform.hpp"
+#include <iostream>
 
 Mesh::Mesh()
 {
@@ -54,10 +55,7 @@ void Mesh::setupMesh()
 	glBindVertexArray(0);
 }
 
-void Mesh::loadModel(const char* path)
-{
-	// TODO: Implement loading models from file
-}
+
 
 void Mesh::draw()
 {
@@ -154,4 +152,94 @@ void Mesh::loadSphere(float radius, unsigned int segments)
 		}
 	}
 	setupMesh();
+}
+
+
+void Mesh::loadModel(const std::string& path)
+{
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+		std::cerr << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
+		return;
+	}
+
+	processNode(scene->mRootNode, scene);
+	setupMesh();
+}
+
+
+void Mesh::processNode(aiNode* node, const aiScene* scene)
+{
+	for (unsigned int i = 0; i < node->mNumMeshes; ++i)
+	{
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		processMesh(mesh, scene);
+	}
+
+	for (unsigned int i = 0; i < node->mNumChildren; ++i)
+	{
+		processNode(node->mChildren[i], scene);
+	}
+}
+
+void Mesh::processMesh(aiMesh* mesh, const aiScene* scene)
+{
+	m_vertices.clear();
+	m_indices.clear();
+
+	// Vertices
+	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+		Vertex vertex;
+
+		// Positions
+		glm::vec3 vector;
+		vector.x = mesh->mVertices[i].x;
+		vector.y = mesh->mVertices[i].y;
+		vector.z = mesh->mVertices[i].z;
+		vertex.m_position = vector;
+
+		// Normals
+		if (mesh->HasNormals()) {
+			vector.x = mesh->mNormals[i].x;
+			vector.y = mesh->mNormals[i].y;
+			vector.z = mesh->mNormals[i].z;
+			vertex.m_normal = vector;
+		}
+
+		// Texture coordinates
+		if (mesh->mTextureCoords[0]) {
+			glm::vec2 vec;
+			vec.x = mesh->mTextureCoords[0][i].x;
+			vec.y = mesh->mTextureCoords[0][i].y;
+			vertex.m_texCoords = vec;
+		}
+		else {
+			vertex.m_texCoords = glm::vec2(0.0f, 0.0f);
+		}
+
+		// Tangents
+		if (mesh->HasTangentsAndBitangents()) {
+			vector.x = mesh->mTangents[i].x;
+			vector.y = mesh->mTangents[i].y;
+			vector.z = mesh->mTangents[i].z;
+			vertex.m_tangent = vector;
+
+			vector.x = mesh->mBitangents[i].x;
+			vector.y = mesh->mBitangents[i].y;
+			vector.z = mesh->mBitangents[i].z;
+			vertex.m_bitangent = vector;
+		}
+
+		m_vertices.push_back(vertex);
+	}
+
+	// Indices
+	for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+		aiFace face = mesh->mFaces[i];
+		for (unsigned int j = 0; j < face.mNumIndices; j++) {
+			m_indices.push_back(face.mIndices[j]);
+		}
+	}
 }

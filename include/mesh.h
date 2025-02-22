@@ -1,9 +1,9 @@
 #pragma once
 
 #include "vertex.h"
-
-
-
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 enum class MeshType
 {
@@ -19,16 +19,18 @@ public:
 	~Mesh();
 
 	void setupMesh();
-	void loadModel(const char* path);
+	void loadModel(const std::string& path);
 	void draw();
 	void loadCube();
 	void loadSphere(float radius, unsigned int segments);
 
 private:
-	float M_PI = 3.14159265359f;
+	void processNode(aiNode* node, const aiScene* scene);
+	void processMesh(aiMesh* mesh, const aiScene* scene);
 
-	unsigned int m_vao, m_vbo, m_ibo;
 	std::vector<Vertex> m_vertices;
 	std::vector<unsigned int> m_indices;
+
+	unsigned int m_vao, m_vbo, m_ibo;
 
 };

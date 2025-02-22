@@ -171,6 +171,15 @@ void Shader::setUniform4f(const std::string& name, float v0, float v1, float v2,
         std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
 }
 
+void Shader::setUniformMat3f(const std::string& name, const glm::mat3& matrix)
+{
+	int location = getUniformLocation(name);
+	if (location != -1)
+		glUniformMatrix3fv(location, 1, GL_FALSE, &matrix[0][0]);
+	else
+		std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
+}
+
 void Shader::setUniform1i(const std::string& name, int value)
 {
     int location = getUniformLocation(name);

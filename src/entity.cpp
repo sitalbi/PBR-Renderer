@@ -20,9 +20,12 @@ void Entity::draw(const glm::mat4& view, const glm::mat4& projection)
 		modelMatrix = glm::rotate(modelMatrix, glm::radians(rotation.z), glm::vec3(0, 0, 1));
 		modelMatrix = glm::scale(modelMatrix, scale);
 
+		glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(modelMatrix)));
+
 		m_material.shader->setUniformMat4f("model", modelMatrix);
 		m_material.shader->setUniformMat4f("view", view);
 		m_material.shader->setUniformMat4f("projection", projection);
+		m_material.shader->setUniformMat3f("normalMatrix", normalMatrix);
 
 		// Set material properties to shader
 		

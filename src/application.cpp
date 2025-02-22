@@ -33,7 +33,7 @@ void Application::run()
 
 void Application::init()
 {
-	m_renderer->setLightPos(glm::vec3(0.0f, 2.0f, -4.5f));
+	m_renderer->setLightPos(glm::vec3(0.0f, 2.0f, -5.0f));
 	m_renderer->setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
 	m_renderer->setCamera(&m_camera);
 	m_renderer->init();
@@ -51,6 +51,9 @@ void Application::init()
 	m_meshes[MeshType::CUBE] = m_cubeMesh;
 	m_meshes[MeshType::SPHERE] = m_sphereMesh;
 
+	std::shared_ptr<Mesh> m_customMesh = std::make_shared<Mesh>();
+	m_customMesh->loadModel(RES_DIR"/models/suzanne.obj");
+
 	Material m_basicMaterial;
 	m_basicMaterial.shader = m_renderer->getPBRShader();
 	m_basicMaterial.albedo = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -60,8 +63,7 @@ void Application::init()
 
 	std::unique_ptr<Scene> scene = std::make_unique<Scene>();
 
-	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::CUBE], m_basicMaterial, glm::vec3(2.0f, 0.0f, 0.0f)));
-	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(-2.0f, 0.0f, 0.0f)));
+	scene->addEntity(std::make_shared<Entity>(m_customMesh, m_basicMaterial, glm::vec3(0.0f, 0.0f, 0.0f)));
 
 	m_renderer->setCurrentScene(std::move(scene));
 
@@ -120,7 +122,12 @@ void Application::updateUI()
 			}
 			if (ImGui::TreeNode("Transform")) {
 				ImGui::InputFloat3("Position", glm::value_ptr(entity->position));
+				ImGui::InputFloat3("Rotation", glm::value_ptr(entity->rotation));
+				ImGui::InputFloat3("Scale", glm::value_ptr(entity->scale));
 				ImGui::TreePop();
+			}
+			if (ImGui::Button("Delete Entity")) {
+				currentScene->deleteEntity(entity);
 			}
 			ImGui::TreePop();
 		}

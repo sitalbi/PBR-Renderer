@@ -7,10 +7,8 @@ public:
 	Scene();
 	~Scene();
 
-	void addEntity(std::shared_ptr<Entity> entity) { 
-		m_entities.push_back(entity); 
-		entity->setName("Entity" + std::to_string(m_entities.size()));
-	}
+	void addEntity(std::shared_ptr<Entity> entity);
+	void deleteEntity(std::shared_ptr<Entity> entity);
 	std::vector<std::shared_ptr<Entity>> getEntities() { return m_entities; }
 
 	glm::vec3& getNewEntityPosition() { return m_newEntityPosition; }

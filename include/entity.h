@@ -8,9 +8,6 @@
 class Entity {
 public:
 	Entity();
-	// Constructor for entity with a basic shader and a mesh
-	Entity(std::shared_ptr<Shader> basicShader, std::shared_ptr<Mesh> mesh) : m_basicShader(basicShader), m_mesh(mesh) {}
-	// Constructor for entity with a mesh and a material (PBR)
 	Entity(std::shared_ptr<Mesh> mesh, Material material, glm::vec3 position) : m_mesh(mesh), m_material(material), position(position), useMaterial(true) {}
 
 	void draw(const glm::mat4& view, const glm::mat4& projection);

@@ -24,8 +24,9 @@ set_property(TARGET "${CMAKE_PROJECT_NAME}" PROPERTY CXX_STANDARD 20)
 add_subdirectory(extern/glad)	#opengl loader
 add_subdirectory(extern/glfw)
 add_subdirectory(extern/glm)	#math library
+add_subdirectory(extern/assimp)	#model loader
 
-target_link_libraries("${CMAKE_PROJECT_NAME}" PUBLIC glfw glad glm)
+target_link_libraries("${CMAKE_PROJECT_NAME}" PUBLIC glfw glad glm assimp)
 
 # Define MY_SOURCES to be a list of all the source files
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")

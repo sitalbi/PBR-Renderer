@@ -10,9 +10,10 @@ out vec3 WorldPos;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform mat3 normalMatrix;
 
 void main() {
-	Normal = normalize(aNormal);
+	Normal = mat3(normalMatrix) * aNormal;
 	TexCoords = aTexCoords;
 	WorldPos = vec3(model * vec4(aPos, 1.0));
     gl_Position = projection * view * model * vec4(aPos, 1.0);
