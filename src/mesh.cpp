@@ -53,12 +53,18 @@ void Mesh::setupMesh()
 
 	// Unbind the VAO
 	glBindVertexArray(0);
+
+	isSetup = true;
 }
 
 
 
 void Mesh::draw()
 {
+	if (!isSetup)
+	{
+		setupMesh();
+	}
 	glBindVertexArray(m_vao);
 	glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);

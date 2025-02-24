@@ -4,6 +4,8 @@
 #include <iostream>
 #include <imgui_impl_opengl3.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <future>
+#include <magic_enum.hpp>
 
 Application::Application()
 {
@@ -44,18 +46,22 @@ void Application::init()
 
 	setCallbacks();
 
-	// Create cube and sphere meshes
+	// Create default meshes
 	std::shared_ptr<Mesh> m_cubeMesh = std::make_shared<Mesh>();
 	m_cubeMesh->loadCube();
 	std::shared_ptr<Mesh> m_sphereMesh = std::make_shared<Mesh>();
 	m_sphereMesh->loadSphere(1.0f, 50);
 
+
+	std::shared_ptr<Mesh> m_suzanneMesh = std::make_shared<Mesh>();
+
+	m_suzanneMesh->loadModel(RES_DIR"/models/suzanne.obj");
+	m_meshes[MeshType::SUZANNE] = m_suzanneMesh;
+
 	m_meshes[MeshType::CUBE] = m_cubeMesh;
 	m_meshes[MeshType::SPHERE] = m_sphereMesh;
 
-	std::shared_ptr<Mesh> m_customMesh = std::make_shared<Mesh>();
-	m_customMesh->loadModel(RES_DIR"/models/suzanne.obj");
-
+	// Create default material
 	Material m_basicMaterial;
 	m_basicMaterial.shader = m_renderer->getPBRShader();
 	m_basicMaterial.albedo = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -64,11 +70,9 @@ void Application::init()
 	m_basicMaterial.ao = 0.1f;
 
 	std::unique_ptr<Scene> scene = std::make_unique<Scene>();
-
-	scene->addEntity(std::make_shared<Entity>(m_customMesh, m_basicMaterial, glm::vec3(0.0f, 0.0f, 0.0f)));
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(0.0f, 0.0f, 0.0f)));
 
 	m_renderer->setCurrentScene(std::move(scene));
-
 }
 
 void Application::shutdown()
@@ -88,6 +92,12 @@ void Application::initUI()
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL(m_renderer->getWindow(), true);
 	ImGui_ImplOpenGL3_Init("#version 330");
+
+	// Setup mesh selecction dropdown data
+	auto meshTypeNames = magic_enum::enum_names<MeshType>(); 
+	for (const auto& name : meshTypeNames) {
+		m_meshTypes.push_back(name.data());
+	}
 }
 
 void Application::updateUI()
@@ -110,7 +120,7 @@ void Application::updateUI()
 	ImGui::SetNextWindowPos(ImVec2(10, 100), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(0, 400), ImGuiCond_Always);
 
-	ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin("Scene Editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
 	for (auto& entity : currentScene->getEntities()) {
 		if (ImGui::TreeNode(entity->getName().c_str())) {
@@ -170,6 +180,9 @@ void Application::updateUI()
 		ImGui::Begin("Create Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::InputFloat3("Position", glm::value_ptr(newPosition));
 
+		ImGui::Combo("Mesh Type", &m_meshTypeIndex, m_meshTypes.data(), static_cast<int>(m_meshTypes.size()));
+		MeshType selectedMeshType = magic_enum::enum_value<MeshType>(m_meshTypeIndex);
+
 		if (ImGui::Button("Confirm Entity")) {
 			Material material;
 			material.shader = m_renderer->getPBRShader();
@@ -178,7 +191,7 @@ void Application::updateUI()
 			material.roughness = 0.1f;
 			material.ao = 0.1f;
 
-			currentScene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], material, newPosition));
+			currentScene->addEntity(std::make_shared<Entity>(m_meshes[selectedMeshType], material, newPosition));
 			isAddingEntity = false;  
 			newPosition = glm::vec3(0.0f); 
 		}

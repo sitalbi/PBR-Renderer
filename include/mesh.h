@@ -8,7 +8,8 @@
 enum class MeshType
 {
 	CUBE,
-	SPHERE
+	SPHERE,
+	SUZANNE
 };
 
 class Mesh
@@ -32,5 +33,7 @@ private:
 	std::vector<unsigned int> m_indices;
 
 	unsigned int m_vao, m_vbo, m_ibo;
+
+	bool isSetup = false;
 
 };
