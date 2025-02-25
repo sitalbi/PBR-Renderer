@@ -2,9 +2,10 @@
 
 out vec4 FragColor;
 
-in vec3 Normal;
 in vec2 TexCoords;
 in vec3 WorldPos;
+in vec3 Normal;
+in mat3 TBN;
 
 uniform vec3 camPos;
 
@@ -13,10 +14,25 @@ uniform vec3 lightPos;
 uniform vec3 lightColor;
 
 // material parameters
-uniform vec3 albedo;
-uniform float metallic;
-uniform float roughness;
-uniform float ao;
+uniform vec3 uAlbedo;
+uniform float uMetallic;
+uniform float uRoughness;
+uniform float uAo;
+
+// material textures 
+uniform sampler2D albedoMap;
+uniform sampler2D normalMap;
+uniform sampler2D metallicMap;
+uniform sampler2D roughnessMap;
+uniform sampler2D aoMap;
+
+// material booleans 
+uniform bool useAlbedoMap;
+uniform bool useNormalMap;
+uniform bool useMetallicMap;
+uniform bool useRoughnessMap;
+uniform bool useAoMap;
+
 
 const float PI = 3.14159265359;
 
@@ -27,7 +43,35 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0);
 
 void main()
 {
-	vec3 N = normalize(Normal);
+	vec3 albedo = uAlbedo;
+	if(useAlbedoMap)
+		albedo = texture(albedoMap, TexCoords).rgb;
+	float metallic = uMetallic;
+	if(useMetallicMap)
+		metallic = texture(metallicMap, TexCoords).r;
+	float roughness = uRoughness;
+	if(useRoughnessMap)
+		roughness = texture(roughnessMap, TexCoords).r;
+	float ao = uAo;
+	if(useAoMap)
+		ao = texture(aoMap, TexCoords).r;
+
+	vec3 N;
+	if (useNormalMap)
+    {
+		// Get normal in tangent space
+        vec3 tangentNormal = texture(normalMap, TexCoords).rgb;
+		// range [0..1] -> [-1..1]
+        tangentNormal = tangentNormal * 2.0 - 1.0;  
+
+        // Transform normal to world space
+        N = normalize(TBN * tangentNormal);
+    }
+    else
+    {
+        N = normalize(Normal);  
+    }
+
 	vec3 V = normalize(camPos - WorldPos);
 
 	vec3 F0 = vec3(0.04);
