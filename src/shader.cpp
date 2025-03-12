@@ -34,7 +34,7 @@ unsigned int Shader::compile() {
         VertexShaderStream.close();
     }
     else {
-        printf("Impossible to open %s.\n", m_vertexFilePath);
+		printf("Impossible to open %s.\n", m_vertexFilePath.c_str());
         getchar();
         return 0;
     }
@@ -49,7 +49,7 @@ unsigned int Shader::compile() {
         FragmentShaderStream.close();
     }
     else {
-        printf("Impossible to open %s.\n", m_fragmentFilePath);
+		printf("Impossible to open %s.\n", m_fragmentFilePath.c_str());
         getchar();
         return 0;
     }
@@ -198,11 +198,20 @@ void Shader::setUniformMat4f(const std::string& name, const glm::mat4& matrix)
         std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
 }
 
+void Shader::setUniformVec3f(const std::string& name, const glm::vec3& vector)
+{
+	int location = getUniformLocation(name);
+	if (location != -1)
+		glUniform3fv(location, 1, &vector[0]);
+	else
+		std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
+}
+
 void Shader::setUniformBool(const std::string& name, bool value)
 {
     int location = getUniformLocation(name);
     if (location != -1)
-        glUniform1i(location, value);
+        glUniform1i(location, (int)value);
     else
         std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
 }

@@ -1,35 +1,37 @@
 #pragma once
 
 #include "shader.h"
-//#include "texture.h"
+#include "texture.h"
 #include <memory>
 
-const int ALBEDO_TEXTURE_UNIT = 0;
-const int NORMAL_TEXTURE_UNIT = 1;
-const int METAL_ROUGH_TEXTURE_UNIT = 2;
-const int AO_TEXTURE_UNIT = 3;
-const int EMISSIVE_TEXTURE_UNIT = 4;
-
-
 struct Material {
+	static const int ALBEDO_TEXTURE_UNIT = 1;
+	static const int NORMAL_TEXTURE_UNIT = 2;
+	static const int METAL_TEXTURE_UNIT = 3;
+	static const int ROUGH_TEXTURE_UNIT = 4;
+	static const int AO_TEXTURE_UNIT = 5;
+	static const int EMISSIVE_TEXTURE_UNIT = 6;
+
 	// Material properties
 	glm::vec3 albedo = glm::vec3(1.0f);
 	float metallic = 0.0f;
 	float roughness = 1.0f;
-	float ao = 1.0f;
+	float ao = 0.25f;
 	glm::vec3 emissiveColor = glm::vec3(0.0f);
 
-	// Textures (not implemented yet)
-	/*std::shared_ptr<Texture> albedoMap;
+	// Textures (might use only ids instead of shared_ptr)
+	std::shared_ptr<Texture> albedoMap;
 	std::shared_ptr<Texture> normalMap;
-	std::shared_ptr<Texture> metalRoughMap;
+	std::shared_ptr<Texture> metallicMap;
+	std::shared_ptr<Texture> roughnessMap;
 	std::shared_ptr<Texture> aoMap;
-	std::shared_ptr<Texture> emissiveMap;*/
+	std::shared_ptr<Texture> emissiveMap;
 
 	// Textures flags
 	bool useAlbedoMap = false;
 	bool useNormalMap = false;
-	bool useMetalRoughMap = false;
+	bool useMetalMap = false;
+	bool useRoughMap = false;
 	bool useAoMap = false;
 	bool useEmissiveMap = false;
 

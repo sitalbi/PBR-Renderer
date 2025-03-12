@@ -42,10 +42,13 @@ void Renderer::init()
 
 	// OpenGL settings
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
 
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+	glDepthFunc(GL_LEQUAL);
+
+	glDisable(GL_CULL_FACE);
+	//glCullFace(GL_BACK);
+
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 	m_pbrShader = std::make_shared<Shader>(RES_DIR "/shaders/basic_vert.glsl", RES_DIR  "/shaders/pbr_frag.glsl");
 	if (m_pbrShader)
@@ -71,7 +74,8 @@ void Renderer::render()
 	if (m_currentScene)
 	{
 		glm::vec3 camPos = m_camera->getPosition();
-		m_pbrShader->setUniform3f("camPos", camPos.x, camPos.y, camPos.z);
+		m_pbrShader->bind();
+		m_pbrShader->setUniform3f("camPos", camPos.x, camPos.y, camPos.z); 
 		m_currentScene->draw(m_camera->getViewMatrix(), m_camera->getProjectionMatrix());
 	}
 }

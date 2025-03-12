@@ -5,92 +5,95 @@ Entity::Entity()
 {
 }
 
-void Entity::draw(const glm::mat4& view, const glm::mat4& projection)
+void Entity::draw(const glm::mat4& view, const glm::mat4& projection, unsigned int irradianceMap, unsigned int prefilterMap, unsigned int brdfLUT)
 {
 	if (!m_mesh) {
 		return;
 	}
+	m_material.shader->bind();
 
-	if (useMaterial) {
-		m_material.shader->bind();
-		glm::mat4 modelMatrix = glm::mat4(1.0f);
-		modelMatrix = glm::translate(modelMatrix, position);
-		modelMatrix = glm::rotate(modelMatrix, glm::radians(rotation.x), glm::vec3(1, 0, 0));
-		modelMatrix = glm::rotate(modelMatrix, glm::radians(rotation.y), glm::vec3(0, 1, 0));
-		modelMatrix = glm::rotate(modelMatrix, glm::radians(rotation.z), glm::vec3(0, 0, 1));
-		modelMatrix = glm::scale(modelMatrix, scale);
+	glm::mat4 modelMatrix = glm::mat4(1.0f);
+	modelMatrix = glm::translate(modelMatrix, position);
+	modelMatrix = glm::rotate(modelMatrix, glm::radians(rotation.x), glm::vec3(1, 0, 0));
+	modelMatrix = glm::rotate(modelMatrix, glm::radians(rotation.y), glm::vec3(0, 1, 0));
+	modelMatrix = glm::rotate(modelMatrix, glm::radians(rotation.z), glm::vec3(0, 0, 1));
+	modelMatrix = glm::scale(modelMatrix, scale);
 
-		glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(modelMatrix)));
-
-		m_material.shader->setUniformMat4f("model", modelMatrix);
-		m_material.shader->setUniformMat4f("view", view);
-		m_material.shader->setUniformMat4f("projection", projection);
-		m_material.shader->setUniformMat3f("normalMatrix", normalMatrix);
-
-		// Set material properties to shader
-		
-		// Albedo
-		m_material.shader->setUniform3f("albedo", m_material.albedo.x, m_material.albedo.y, m_material.albedo.z);
-
-		// Metal Roughness
-		m_material.shader->setUniform1f("metallic", m_material.metallic);
-		m_material.shader->setUniform1f("roughness", m_material.roughness);
-
-		// Ambient Occlusion
-		m_material.shader->setUniform1f("ao", m_material.ao);
-
-		// Emissive (Not implemented yet)
-		//m_material.shader->setUniform3f("emissiveColor", m_material.emissiveColor.x, m_material.emissiveColor.y, m_material.emissiveColor.z);
+	m_material.shader->setUniformMat4f("model", modelMatrix);
+	m_material.shader->setUniformMat4f("view", view);
+	m_material.shader->setUniformMat4f("projection", projection);
 
 
-		//// Set material properties to shader (not implemented yet)
-		//
-		//// Albedo
-		//m_material.shader->setUniformBool("useAlbedoMap", m_material.useAlbedoMap);
-		//if (m_material.useAlbedoMap && m_material.albedoMap) {
-		//	m_material.albedoMap->bind(ALBEDO_TEXTURE_UNIT);
-		//	m_material.shader->setUniform1i("albedoMap", ALBEDO_TEXTURE_UNIT);
-		//}
-		//else {
-		//	m_material.shader->setUniform3f("albedo", m_material.albedo);
-		//}
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
+	m_material.shader->setUniform1i("irradianceMap", 0);
 
-		//// Normal
-		//m_material.shader->setUniformBool("useNormalMap", m_material.useNormalMap);
-		//if (m_material.useNormalMap && m_material.normalMap) {
-		//	m_material.normalMap->bind(NORMAL_TEXTURE_UNIT);
-		//	m_material.shader->setUniform1i("normalMap", NORMAL_TEXTURE_UNIT);
-		//}
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
+	m_material.shader->setUniform1i("prefilterMap", 1);
 
-		//// Metal Roughness
-		//m_material.shader->setUniformBool("useMetalRoughMap", m_material.useMetalRoughMap);
-		//if (m_material.useMetalRoughMap && m_material.metalRoughMap) {
-		//	m_material.metalRoughMap->bind(METAL_ROUGH_TEXTURE_UNIT);
-		//	m_material.shader->setUniform1i("metalRoughMap", METAL_ROUGH_TEXTURE_UNIT);
-		//}
-		//m_material.shader->setUniform1f("metallic", m_material.metallic);
-		//m_material.shader->setUniform1f("roughness", m_material.roughness);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, brdfLUT);
+	m_material.shader->setUniform1i("brdfLUT", 2);
 
-		//// Ambient Occlusion
-		//m_material.shader->setUniformBool("useAoMap", m_material.useAoMap);
-		//if (m_material.useAoMap && m_material.aoMap) {
-		//	m_material.aoMap->bind(AO_TEXTURE_UNIT);
-		//	m_material.shader->setUniform1i("aoMap", AO_TEXTURE_UNIT);
-		//}
-		//else {
-		//	m_material.shader->setUniform1f("ao", m_material.ao);
-		//}
+	// Set material properties to shader
+	// Albedo
+	m_material.shader->setUniform3f("uAlbedo", m_material.albedo.x, m_material.albedo.y, m_material.albedo.z);
 
-		//// Emissive
-		//m_material.shader->setUniformBool("useEmissiveMap", m_material.useEmissiveMap);
-		//if (m_material.useEmissiveMap && m_material.emissiveMap) {
-		//	m_material.emissiveMap->bind(EMISSIVE_TEXTURE_UNIT);
-		//	m_material.shader->setUniform1i("emissiveMap", EMISSIVE_TEXTURE_UNIT);
-		//}
-		//else {
-		//	m_material.shader->setUniform3f("emissiveColor", m_material.emissiveColor);
-		//}
+	// Metal Roughness
+	m_material.shader->setUniform1f("uMetallic", m_material.metallic);
+	m_material.shader->setUniform1f("uRoughness", m_material.roughness);
+
+	// Ambient Occlusion
+	m_material.shader->setUniform1f("uAo", m_material.ao);
+
+	//// Emissive (Not implemented yet)
+	////m_material.shader->setUniform3f("emissiveColor", m_material.emissiveColor.x, m_material.emissiveColor.y, m_material.emissiveColor.z);
+
+
+	// Set material properties to shader (not implemented yet)
+	// Albedo
+	m_material.shader->setUniformBool("useAlbedoMap", m_material.useAlbedoMap);
+	if (m_material.useAlbedoMap && m_material.albedoMap) {
+		m_material.albedoMap->bind(Material::ALBEDO_TEXTURE_UNIT);
+		m_material.shader->setUniform1i("albedoMap", Material::ALBEDO_TEXTURE_UNIT);
 	}
+
+	// Normal
+	m_material.shader->setUniformBool("useNormalMap", m_material.useNormalMap);
+	if (m_material.useNormalMap && m_material.normalMap) {
+		m_material.normalMap->bind(Material::NORMAL_TEXTURE_UNIT);
+		m_material.shader->setUniform1i("normalMap", Material::NORMAL_TEXTURE_UNIT);
+	}
+
+	// Metallic
+	m_material.shader->setUniformBool("useMetallicMap", m_material.useMetalMap);
+	if (m_material.useMetalMap && m_material.metallicMap) {
+		m_material.metallicMap->bind(Material::METAL_TEXTURE_UNIT);
+		m_material.shader->setUniform1i("metallicMap", Material::METAL_TEXTURE_UNIT);
+	}
+
+	// Roughness
+	m_material.shader->setUniformBool("useRoughnessMap", m_material.useRoughMap);
+	if (m_material.useRoughMap && m_material.roughnessMap) {
+		m_material.roughnessMap->bind(Material::ROUGH_TEXTURE_UNIT);
+		m_material.shader->setUniform1i("roughnessMap", Material::ROUGH_TEXTURE_UNIT);
+	}
+
+	// Ambient Occlusion
+	m_material.shader->setUniformBool("useAoMap", m_material.useAoMap);
+	if (m_material.useAoMap && m_material.aoMap) {
+		m_material.aoMap->bind(Material::AO_TEXTURE_UNIT);
+		m_material.shader->setUniform1i("aoMap", Material::AO_TEXTURE_UNIT);
+	}
+
+	// Emissive (Not implemented yet)
+	/*m_material.shader->setUniformBool("useEmissiveMap", m_material.useEmissiveMap);
+	if (m_material.useEmissiveMap && m_material.emissiveMap) {
+		m_material.emissiveMap->bind(Material::EMISSIVE_TEXTURE_UNIT);
+		m_material.shader->setUniform1i("emissiveMap", Material::EMISSIVE_TEXTURE_UNIT);
+	}*/
+	
 
 	m_mesh->draw();
 }

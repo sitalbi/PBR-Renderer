@@ -27,7 +27,7 @@ void Camera::setFov(float fov)
 }
 
 void Camera::setDistance(float distance) {
-	m_distance = glm::max(distance, 0.1f);
+	m_distance = glm::clamp(distance, m_minDistance, m_maxDistance);
 	updateCameraVectors();
 }
 
@@ -40,6 +40,9 @@ void Camera::setPosition(glm::vec3 position)
 void Camera::setTarget(std::shared_ptr<Entity> target)
 {
 	m_target = target;
+	if (m_target) {
+		m_distance = glm::clamp(glm::distance(m_position, m_target->position), m_minDistance, m_maxDistance);
+	}
 	updateCameraVectors();
 }
 

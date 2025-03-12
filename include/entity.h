@@ -10,7 +10,7 @@ public:
 	Entity();
 	Entity(std::shared_ptr<Mesh> mesh, Material material, glm::vec3 position) : m_mesh(mesh), m_material(material), position(position), useMaterial(true) {}
 
-	void draw(const glm::mat4& view, const glm::mat4& projection);
+	void draw(const glm::mat4& view, const glm::mat4& projection, unsigned int irradianceMap, unsigned int prefilterMap, unsigned int brdfLUT);
 
 	void setMesh(std::shared_ptr<Mesh> mesh) { m_mesh = mesh; }
 

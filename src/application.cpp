@@ -37,7 +37,7 @@ void Application::run()
 
 void Application::init()
 {
-	m_renderer->setLightPos(glm::vec3(0.0f, 2.0f, -5.0f));
+	m_renderer->setLightPos(glm::vec3(-2.5f, 2.0f, 0.0f));
 	m_renderer->setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
 	m_renderer->setCamera(&m_camera);
 	m_renderer->init();
@@ -65,9 +65,23 @@ void Application::init()
 	Material m_basicMaterial;
 	m_basicMaterial.shader = m_renderer->getPBRShader();
 	m_basicMaterial.albedo = glm::vec3(1.0f, 0.0f, 0.0f);
-	m_basicMaterial.metallic = 1.0f;
-	m_basicMaterial.roughness = 0.1f;
+	m_basicMaterial.metallic = 0.5f;
+	m_basicMaterial.roughness = 0.5f;
 	m_basicMaterial.ao = 0.1f;
+
+	// Create textured material
+	Material m_texturedMaterial;
+	m_texturedMaterial.shader = m_renderer->getPBRShader();
+
+	m_texturedMaterial.albedoMap = std::make_shared<Texture>(RES_DIR"/textures/rustediron2_base.png");
+	m_texturedMaterial.normalMap = std::make_shared<Texture>(RES_DIR"/textures/rustediron2_normal.png", true);
+	m_texturedMaterial.metallicMap = std::make_shared<Texture>(RES_DIR"/textures/rustediron2_metallic.png");
+	m_texturedMaterial.roughnessMap = std::make_shared<Texture>(RES_DIR"/textures/rustediron2_roughness.png");
+
+	m_texturedMaterial.useAlbedoMap = true;
+	m_texturedMaterial.useNormalMap = true;
+	m_texturedMaterial.useMetalMap = true;
+	m_texturedMaterial.useRoughMap = true;
 
 	std::unique_ptr<Scene> scene = std::make_unique<Scene>();
 	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(0.0f, 0.0f, 0.0f)));
@@ -91,7 +105,7 @@ void Application::initUI()
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL(m_renderer->getWindow(), true);
-	ImGui_ImplOpenGL3_Init("#version 330");
+	ImGui_ImplOpenGL3_Init("#version 450");
 
 	// Setup mesh selecction dropdown data
 	auto meshTypeNames = magic_enum::enum_names<MeshType>(); 
@@ -122,15 +136,35 @@ void Application::updateUI()
 
 	ImGui::Begin("Scene Editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
+	// Entity list
 	for (auto& entity : currentScene->getEntities()) {
 		if (ImGui::TreeNode(entity->getName().c_str())) {
 			if (ImGui::TreeNode("Material")) {
 				Material& material = entity->getMaterial();
-				ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
-				ImGui::SliderFloat("Metallic", &material.metallic, 0.0f, 1.0f);
-				ImGui::SliderFloat("Roughness", &material.roughness, 0.0f, 1.0f);
-				ImGui::SliderFloat("Ambient Occlusion", &material.ao, 0.0f, 1.0f);
-
+				if (!material.useAlbedoMap) {
+					ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
+				}
+				else {
+					ImGui::Text("Albedo Map");
+				}
+				if (!material.useMetalMap) {
+					ImGui::SliderFloat("Metallic", &material.metallic, 0.0f, 1.0f);
+				}
+				else {
+					ImGui::Text("Metallic Map");
+				}
+				if (!material.useRoughMap) {
+					ImGui::SliderFloat("Roughness", &material.roughness, 0.0f, 1.0f);
+				}
+				else {
+					ImGui::Text("Roughness Map");
+				}
+				if (!material.useAoMap) {
+					ImGui::SliderFloat("AO", &material.ao, 0.0f, 1.0f);
+				}
+				else {
+					ImGui::Text("AO Map");
+				}
 				ImGui::TreePop();
 			}
 			if (ImGui::TreeNode("Transform")) {

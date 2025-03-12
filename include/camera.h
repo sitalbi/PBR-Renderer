@@ -79,4 +79,7 @@ private:
 
 	float m_speed = 3.0f;
 
+	float m_minDistance = 0.75f;
+	float m_maxDistance = 100.0f;
+
 };
