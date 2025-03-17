@@ -37,7 +37,7 @@ void Application::run()
 
 void Application::init()
 {
-	m_renderer->setLightPos(glm::vec3(-2.5f, 2.0f, 0.0f));
+	m_renderer->setLightDir(glm::vec3(0.0f, 1.0f, -1.0f));
 	m_renderer->setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
 	m_renderer->setCamera(&m_camera);
 	m_renderer->init();
@@ -65,18 +65,19 @@ void Application::init()
 	Material m_basicMaterial;
 	m_basicMaterial.shader = m_renderer->getPBRShader();
 	m_basicMaterial.albedo = glm::vec3(1.0f, 0.0f, 0.0f);
-	m_basicMaterial.metallic = 0.5f;
-	m_basicMaterial.roughness = 0.5f;
-	m_basicMaterial.ao = 0.1f;
+	m_basicMaterial.metallic = 0.01f;
+	m_basicMaterial.roughness = 0.9f;
+	m_basicMaterial.ao = 0.25f;
 
 	// Create textured material
 	Material m_texturedMaterial;
 	m_texturedMaterial.shader = m_renderer->getPBRShader();
 
-	m_texturedMaterial.albedoMap = std::make_shared<Texture>(RES_DIR"/textures/rustediron2_base.png");
-	m_texturedMaterial.normalMap = std::make_shared<Texture>(RES_DIR"/textures/rustediron2_normal.png", true);
-	m_texturedMaterial.metallicMap = std::make_shared<Texture>(RES_DIR"/textures/rustediron2_metallic.png");
-	m_texturedMaterial.roughnessMap = std::make_shared<Texture>(RES_DIR"/textures/rustediron2_roughness.png");
+	m_texturedMaterial.albedoMap = std::make_shared<Texture>(RES_DIR"/textures/silver_albedo.png");
+	m_texturedMaterial.normalMap = std::make_shared<Texture>(RES_DIR"/textures/silver_normal-ogl.png", true);
+	m_texturedMaterial.metallicMap = std::make_shared<Texture>(RES_DIR"/textures/silver_metallic.png");
+	m_texturedMaterial.roughnessMap = std::make_shared<Texture>(RES_DIR"/textures/silver_roughness.png");
+	m_texturedMaterial.aoMap = std::make_shared<Texture>(RES_DIR"/textures/silver_ao.png");
 
 	m_texturedMaterial.useAlbedoMap = true;
 	m_texturedMaterial.useNormalMap = true;
@@ -84,7 +85,19 @@ void Application::init()
 	m_texturedMaterial.useRoughMap = true;
 
 	std::unique_ptr<Scene> scene = std::make_unique<Scene>();
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(-5.0f, 0.0f, 0.0f)));
+	m_basicMaterial.metallic = 0.3f;
+	m_basicMaterial.roughness = 0.75f;
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(-2.5f, 0.0f, 0.0f)));
+	m_basicMaterial.metallic = 0.5f;
+	m_basicMaterial.roughness = 0.5f;
 	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(0.0f, 0.0f, 0.0f)));
+	m_basicMaterial.metallic = 0.75f;
+	m_basicMaterial.roughness = 0.25f;
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(2.5f, 0.0f, 0.0f)));
+	m_basicMaterial.metallic = 0.9f;
+	m_basicMaterial.roughness = 0.0f;
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(5.0f, 0.0f, 0.0f)));
 
 	m_renderer->setCurrentScene(std::move(scene));
 }

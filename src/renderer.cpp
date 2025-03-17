@@ -25,6 +25,7 @@ void Renderer::init()
 		return;
 	}
 
+	glfwWindowHint(GLFW_SAMPLES, 8);
 	m_window = glfwCreateWindow(window_width, window_height, "Renderer", NULL, NULL);
 	if (!m_window) {
 		std::cerr << "Failed to create window" << std::endl;
@@ -40,6 +41,9 @@ void Renderer::init()
 		return;
 	}
 
+	// Enable MSAA
+	glEnable(GL_MULTISAMPLE);
+
 	// OpenGL settings
 	glEnable(GL_DEPTH_TEST);
 
@@ -54,7 +58,7 @@ void Renderer::init()
 	if (m_pbrShader)
 	{
 		m_pbrShader->bind();
-		m_pbrShader->setUniform3f("lightPos", m_lightPos.x, m_lightPos.y, m_lightPos.z);
+		m_pbrShader->setUniform3f("lightDir", m_lightDir.x, m_lightDir.y, m_lightDir.z);
 		m_pbrShader->setUniform3f("lightColor", m_lightColor.x, m_lightColor.y, m_lightColor.z);
 		glm::vec3 camPos = m_camera->getPosition();
 		m_pbrShader->setUniform3f("camPos", camPos.x, camPos.y, camPos.z);

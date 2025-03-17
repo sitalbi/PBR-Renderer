@@ -80,7 +80,7 @@ Scene::Scene()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Load default skybox cubemap hdr texture
-	loadHDRImage(RES_DIR"/textures/skybox/cave_wall_4k.hdr");
+	loadHDRImage(RES_DIR"/textures/skybox/quarry_cloudy_4k.hdr");
 }
 
 Scene::~Scene()
@@ -252,6 +252,7 @@ void Scene::loadCubemap()
 	m_prefilterShader->setUniform1i("environmentMap", 0); 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, m_envCubemap);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
 	for (unsigned int mip = 0; mip < maxMipLevels; ++mip)

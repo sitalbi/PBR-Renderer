@@ -10,7 +10,7 @@ in mat3 TBN;
 uniform vec3 camPos;
 
 // light parameters
-uniform vec3 lightPos;
+uniform vec3 lightDir;
 uniform vec3 lightColor;
 
 // material parameters
@@ -93,47 +93,45 @@ void main()
     vec3 Lo = vec3(0.0);
     
     // calculate per-light radiance
-    vec3 L = normalize(lightPos - WorldPos);
+    vec3 L = normalize(lightDir);
     vec3 H = normalize(V + L);
-    float distance = length(lightPos - WorldPos);
-    //float attenuation = 1.0 / (distance * distance);
-    float attenuation = 1.0 / (distance);
+    //float distance = length(lightPos - WorldPos);     // point light
+    //float attenuation = 1.0 / (distance * distance);  // point light
+    float attenuation = 1.0;
     vec3 radiance = lightColor * attenuation;
     
     // cook-torrance brdf
     float NDF = DistributionGGX(N, H, roughness);
     float G = GeometrySmith(N, V, L, roughness);
-    vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+    vec3 F = fresnelSchlick(max(dot(N, V), 0.0), F0);
     
+    // reflectance
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
     kD *= 1.0 - metallic;
     
-//    vec3 numerator    = NDF * G * F;
-//    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;
-//    vec3 specular     = numerator / denominator;  
-//        
-//    // add to outgoing radiance Lo
-//    float NdotL = max(dot(N, L), 0.0);                
-//    Lo = (kD * albedo / PI + specular) * radiance * NdotL; 
-
-
+    // specular
+    vec3 numerator    = NDF * G * F;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;
+    vec3 specular     = numerator / denominator;  
     
+    float NdotL = max(dot(N, L), 0.0);                
+    Lo = (kD * albedo / PI + specular) * radiance * NdotL; 
+
+    // diffuse IBL
     vec3 irradiance = texture(irradianceMap, N).rgb;
     vec3 diffuse    = irradiance * albedo;
 
+    // specular IBL
     vec3 R = reflect(-V, N);
     const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;   
     vec2 envBRDF  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
-    vec3 specular = prefilteredColor * (F*envBRDF.x + envBRDF.y);
+    vec3 specularIBL = prefilteredColor * (F*envBRDF.x + envBRDF.y);
 
-    vec3 ambient    = (kD*diffuse + specular) * ao; 
-    
-    //vec3 ambient = vec3(0.03) * albedo * ao;
-    
-    // add to outgoing radiance Lo
-    vec3 color = ambient;
+    vec3 ambient    = (kD*diffuse + specularIBL) * ao; 
+
+    vec3 color = ambient + Lo;
     
     // gamma correction
     color = color / (color + vec3(1.0));
