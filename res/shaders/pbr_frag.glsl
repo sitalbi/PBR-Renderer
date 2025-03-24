@@ -13,25 +13,27 @@ uniform vec3 camPos;
 uniform vec3 lightDir;
 uniform vec3 lightColor;
 
-// material parameters
-uniform vec3 uAlbedo;
-uniform float uMetallic;
-uniform float uRoughness;
-uniform float uAo;
+// PBR material
+struct Material {
+    bool useAlbedoTexture;
+    bool useMetallicTexture;
+    bool useRoughnessTexture;
+    bool useAoTexture;
+    bool useNormalTexture;
 
-// material textures 
-uniform sampler2D albedoMap;
-uniform sampler2D normalMap;
-uniform sampler2D metallicMap;
-uniform sampler2D roughnessMap;
-uniform sampler2D aoMap;
+    vec3 albedo;
+    float metallic;
+    float roughness;
+    float ao;
 
-// material booleans 
-uniform bool useAlbedoMap;
-uniform bool useNormalMap;
-uniform bool useMetallicMap;
-uniform bool useRoughnessMap;
-uniform bool useAoMap;
+    sampler2D albedoMap;
+    sampler2D normalMap;
+    sampler2D metallicMap;
+    sampler2D roughnessMap;
+    sampler2D aoMap;
+};
+
+uniform Material material;
 
 // environment cubemap
 uniform samplerCube irradianceMap;
@@ -50,39 +52,33 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
 
 void main()
 {
+    // Material properties calculation
+    vec3 albedo = material.albedo;
+    if(material.useAlbedoTexture) {
+        albedo = texture(material.albedoMap, TexCoords).rgb;
+    }
 
-	vec3 albedo = uAlbedo;
-//	if(useAlbedoMap) {
-//		albedo = texture(albedoMap, TexCoords).rgb;
-//	}
-	float metallic = uMetallic;
-//	if(useMetallicMap) {
-//		metallic = texture(metallicMap, TexCoords).r;
-//	}
-	float roughness = uRoughness;
-//	if(useRoughnessMap){
-//		roughness = texture(roughnessMap, TexCoords).r;
-//	}
-	float ao = uAo;
-//	if(useAoMap) {
-//		ao = texture(aoMap, TexCoords).r;
-//	}
+    float metallic = material.metallic;
+    if(material.useMetallicTexture) {
+        metallic = texture(material.metallicMap, TexCoords).r;
+    }
 
-	vec3 N= normalize(Normal);  
-//	if (useNormalMap)
-//    {
-//		// Get normal in tangent space
-//        vec3 tangentNormal = texture(normalMap, TexCoords).rgb;
-//		// from range [0..1] to [-1..1]
-//        tangentNormal = tangentNormal * 2.0 - 1.0;  
-//
-//        // Transform normal to world space
-//        N = normalize(TBN * tangentNormal);
-//    }
-//    else
-//    {
-//        N = normalize(Normal);  
-//    }
+    float roughness = material.roughness;
+    if(material.useRoughnessTexture) {
+        roughness = texture(material.roughnessMap, TexCoords).r;
+    }
+
+    float ao = material.ao;
+    if(material.useAoTexture) {
+        ao = texture(material.aoMap, TexCoords).r;
+    }
+    
+    vec3 N = normalize(Normal);
+    if (material.useNormalTexture) {
+        vec3 tangentNormal = texture(material.normalMap, TexCoords).rgb;
+        tangentNormal = tangentNormal * 2.0 - 1.0;
+        N = normalize(TBN * tangentNormal);
+    }
 
 	vec3 V = normalize(camPos - WorldPos);
     
@@ -103,7 +99,7 @@ void main()
     // cook-torrance brdf
     float NDF = DistributionGGX(N, H, roughness);
     float G = GeometrySmith(N, V, L, roughness);
-    vec3 F = fresnelSchlick(max(dot(N, V), 0.0), F0);
+    vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
     
     // reflectance
     vec3 kS = F;
@@ -129,7 +125,7 @@ void main()
     vec2 envBRDF  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specularIBL = prefilteredColor * (F*envBRDF.x + envBRDF.y);
 
-    vec3 ambient    = (kD*diffuse + specularIBL) * ao; 
+    vec3 ambient    = (kD*diffuse+specularIBL)*ao; 
 
     vec3 color = ambient + Lo;
     

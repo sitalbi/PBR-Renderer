@@ -3,12 +3,19 @@
 #include "glad/glad.h"
 #include <string>
 
+enum class TextureType {
+	ALBEDO,
+	NORMAL,
+	METALLIC,
+	ROUGHNESS,
+	AO
+};
 
 class Texture {
 
 public:
 	Texture();
-	Texture(std::string path, bool isNormalMap = false);
+	Texture(std::string path);
 	~Texture();
 
 	void load(const char* path);
@@ -18,6 +25,7 @@ public:
 private:
 
 	unsigned int m_id;
+	TextureType m_type;
 
 	bool m_isNormalMap = false;
 };

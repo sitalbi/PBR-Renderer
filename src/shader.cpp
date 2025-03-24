@@ -211,7 +211,7 @@ void Shader::setUniformBool(const std::string& name, bool value)
 {
     int location = getUniformLocation(name);
     if (location != -1)
-        glUniform1i(location, (int)value);
+        glUniform1i(location, value);
     else
         std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
 }

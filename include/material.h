@@ -5,12 +5,12 @@
 #include <memory>
 
 struct Material {
-	static const int ALBEDO_TEXTURE_UNIT = 1;
-	static const int NORMAL_TEXTURE_UNIT = 2;
-	static const int METAL_TEXTURE_UNIT = 3;
-	static const int ROUGH_TEXTURE_UNIT = 4;
-	static const int AO_TEXTURE_UNIT = 5;
-	static const int EMISSIVE_TEXTURE_UNIT = 6;
+	static const int ALBEDO_TEXTURE_UNIT = 4;
+	static const int NORMAL_TEXTURE_UNIT = 5;
+	static const int METAL_TEXTURE_UNIT = 6;
+	static const int ROUGH_TEXTURE_UNIT = 7;
+	static const int AO_TEXTURE_UNIT = 8;
+	static const int EMISSIVE_TEXTURE_UNIT = 9;
 
 	// Material properties
 	glm::vec3 albedo = glm::vec3(1.0f);

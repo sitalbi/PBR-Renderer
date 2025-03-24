@@ -8,7 +8,16 @@
 class Entity {
 public:
 	Entity();
-	Entity(std::shared_ptr<Mesh> mesh, Material material, glm::vec3 position) : m_mesh(mesh), m_material(material), position(position), useMaterial(true) {}
+	Entity(std::shared_ptr<Mesh> mesh, Material material, glm::vec3 position) : m_mesh(mesh), m_material(material), position(position), useMaterial(true) {
+		/*if (material.shader) {
+			material.shader->bind();
+			material.shader->setUniformBool("useAlbedoTexture", material.useAlbedoMap);
+			material.shader->setUniformBool("useNormalTexture", material.useNormalMap);
+			material.shader->setUniformBool("useMetallicTexture", material.useMetalMap);
+			material.shader->setUniformBool("useRoughnessTexture", material.useRoughMap);
+			material.shader->setUniformBool("useAoTexture", material.useAoMap);
+		}*/
+	}
 
 	void draw(const glm::mat4& view, const glm::mat4& projection, unsigned int irradianceMap, unsigned int prefilterMap, unsigned int brdfLUT);
 
