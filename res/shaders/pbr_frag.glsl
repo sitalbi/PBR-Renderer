@@ -55,7 +55,7 @@ void main()
     // Material properties calculation
     vec3 albedo = material.albedo;
     if(material.useAlbedoTexture) {
-        albedo = texture(material.albedoMap, TexCoords).rgb;
+        albedo = pow(texture(material.albedoMap, TexCoords).rgb, vec3(2.2));
     }
 
     float metallic = material.metallic;

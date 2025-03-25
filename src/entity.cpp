@@ -5,7 +5,7 @@ Entity::Entity()
 {
 }
 
-void Entity::draw(const glm::mat4& view, const glm::mat4& projection, unsigned int irradianceMap, unsigned int prefilterMap, unsigned int brdfLUT)
+void Entity::draw(const glm::mat4& view, const glm::mat4& projection)
 {
 	if (!m_mesh) {
 		return;
@@ -24,19 +24,9 @@ void Entity::draw(const glm::mat4& view, const glm::mat4& projection, unsigned i
 	m_material.shader->setUniformMat4f("projection", projection);
 
 	// IBL
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMap);
 	m_material.shader->setUniform1i("irradianceMap", 0);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMap);
 	m_material.shader->setUniform1i("prefilterMap", 1);
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, brdfLUT);
 	m_material.shader->setUniform1i("brdfLUT", 2);
-
-	
 
 	// Set material properties to shader
 	// Albedo

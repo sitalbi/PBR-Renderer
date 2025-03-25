@@ -19,7 +19,7 @@ public:
 		}*/
 	}
 
-	void draw(const glm::mat4& view, const glm::mat4& projection, unsigned int irradianceMap, unsigned int prefilterMap, unsigned int brdfLUT);
+	void draw(const glm::mat4& view, const glm::mat4& projection);
 
 	void setMesh(std::shared_ptr<Mesh> mesh) { m_mesh = mesh; }
 

@@ -73,17 +73,19 @@ void Application::init()
 	Material m_texturedMaterial;
 	m_texturedMaterial.shader = m_renderer->getPBRShader();
 
-	m_texturedMaterial.albedoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-alb.png");
-	m_texturedMaterial.normalMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-normal.png");
-	m_texturedMaterial.metallicMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-metal.png");
-	m_texturedMaterial.roughnessMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-rough.png");
-	m_texturedMaterial.aoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-ao.png");
+	// TODO: load materials from folder and create material class automatically by reading the existing files
+	m_texturedMaterial.albedoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/lightgold_albedo.png");
+	m_texturedMaterial.normalMap = std::make_shared<Texture>(RES_DIR"/textures/materials/lightgold_normal-ogl.png");
+	m_texturedMaterial.metallicMap = std::make_shared<Texture>(RES_DIR"/textures/materials/lightgold_metallic.png");
+	m_texturedMaterial.roughnessMap = std::make_shared<Texture>(RES_DIR"/textures/materials/lightgold_roughness.png");
+	//m_texturedMaterial.aoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-ao.png");
+	m_texturedMaterial.ao = 0.5f;
 
 	m_texturedMaterial.useAlbedoMap = true;
 	m_texturedMaterial.useNormalMap = true;
 	m_texturedMaterial.useMetalMap = true;
 	m_texturedMaterial.useRoughMap = true;
-	m_texturedMaterial.useAoMap = true;
+	//m_texturedMaterial.useAoMap = true;
 
 	std::unique_ptr<Scene> scene = std::make_unique<Scene>();
 	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(-5.0f, 0.0f, 0.0f)));
@@ -101,6 +103,8 @@ void Application::init()
 	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(5.0f, 0.0f, 0.0f)));
 
 	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_texturedMaterial, glm::vec3(0.0f, 3.0f, 0.0f)));
+
+	//scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SUZANNE], m_basicMaterial, glm::vec3(0.0f, 0.0f, 0.0f)));
 
 	m_renderer->setCurrentScene(std::move(scene));
 }

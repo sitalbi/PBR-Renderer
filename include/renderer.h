@@ -52,6 +52,5 @@ private:
 	void render();
 	void swapBuffers();
 
-	void initUI();
 	void renderUI();
 };
