@@ -5,3 +5,7 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 
 TODO:
 - add hot reload for shaders
+- SSAO
+- Shadows
+- Deferred rendering
+- Scene save/load 
