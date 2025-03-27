@@ -9,7 +9,8 @@ enum class MeshType
 {
 	CUBE,
 	SPHERE,
-	SUZANNE
+	SUZANNE,
+	KABUTO
 };
 
 class Mesh

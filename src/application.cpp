@@ -54,9 +54,12 @@ void Application::init()
 
 
 	std::shared_ptr<Mesh> m_suzanneMesh = std::make_shared<Mesh>();
-
 	m_suzanneMesh->loadModel(RES_DIR"/models/suzanne.obj");
 	m_meshes[MeshType::SUZANNE] = m_suzanneMesh;
+
+	std::shared_ptr<Mesh> m_kabutoMesh = std::make_shared<Mesh>();
+	m_kabutoMesh->loadModel(RES_DIR"/models/kabuto.obj");
+	m_meshes[MeshType::KABUTO] = m_kabutoMesh;
 
 	m_meshes[MeshType::CUBE] = m_cubeMesh;
 	m_meshes[MeshType::SPHERE] = m_sphereMesh;
@@ -87,8 +90,22 @@ void Application::init()
 	m_texturedMaterial.useRoughMap = true;
 	//m_texturedMaterial.useAoMap = true;
 
+	// Kabuto material
+	Material m_kabutoMaterial;
+	m_kabutoMaterial.shader = m_renderer->getPBRShader();
+	m_kabutoMaterial.albedoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/Material_baseColor.png");
+	m_kabutoMaterial.normalMap = std::make_shared<Texture>(RES_DIR"/textures/materials/Material_normal.png");
+	m_kabutoMaterial.metallicMap = std::make_shared<Texture>(RES_DIR"/textures/materials/Material_metallic.png");
+	m_kabutoMaterial.roughnessMap = std::make_shared<Texture>(RES_DIR"/textures/materials/Material_roughness.png");
+	m_kabutoMaterial.ao = 0.5f;
+
+	m_kabutoMaterial.useAlbedoMap = true;
+	m_kabutoMaterial.useNormalMap = true;
+	m_kabutoMaterial.useMetalMap = true;
+	m_kabutoMaterial.useRoughMap = true;
+
 	std::unique_ptr<Scene> scene = std::make_unique<Scene>();
-	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(-5.0f, 0.0f, 0.0f)));
+	/*scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(-5.0f, 0.0f, 0.0f)));
 	m_basicMaterial.metallic = 0.3f;
 	m_basicMaterial.roughness = 0.75f;
 	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(-2.5f, 0.0f, 0.0f)));
@@ -102,9 +119,9 @@ void Application::init()
 	m_basicMaterial.roughness = 0.0f;
 	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(5.0f, 0.0f, 0.0f)));
 
-	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_texturedMaterial, glm::vec3(0.0f, 3.0f, 0.0f)));
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_texturedMaterial, glm::vec3(0.0f, 3.0f, 0.0f)));*/
 
-	//scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SUZANNE], m_basicMaterial, glm::vec3(0.0f, 0.0f, 0.0f)));
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::KABUTO], m_kabutoMaterial, glm::vec3(0.0f, 0.0f, 0.0f)));
 
 	m_renderer->setCurrentScene(std::move(scene));
 }
