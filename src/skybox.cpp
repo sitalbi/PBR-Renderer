@@ -193,7 +193,7 @@ void Skybox::loadCubemap()
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, m_envCubemap, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		renderCube();
+		Renderer::renderCube();
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, window_width, window_height);
@@ -233,7 +233,7 @@ void Skybox::loadCubemap()
 		m_irradianceShader->setUniformMat4f("view", captureViews[i]);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, m_irradianceMap, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		renderCube();
+		Renderer::renderCube();
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, window_width, window_height);
@@ -278,7 +278,7 @@ void Skybox::loadCubemap()
 			m_prefilterShader->setUniformMat4f("view", captureViews[i]);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, m_prefilterMap, mip);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			renderCube();
+			Renderer::renderCube();
 		}
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -301,7 +301,7 @@ void Skybox::loadCubemap()
 	glViewport(0, 0, 512, 512);
 	m_brdfShader->bind();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	renderQuad();
+	Renderer::renderQuad();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	// Reset viewport to window dimensions

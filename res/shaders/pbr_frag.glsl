@@ -1,6 +1,7 @@
 #version 450 core
 
-out vec4 FragColor;
+layout (location = 0) out vec4 gColor;
+layout (location = 1) out vec4 gNormal;
 
 in vec2 TexCoords;
 in vec3 WorldPos;
@@ -133,8 +134,8 @@ void main()
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));
     
-    FragColor = vec4(color, 1.0);
-
+    gColor = vec4(color, 1.0);
+    gNormal = vec4(N, 1.0);
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)

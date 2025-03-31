@@ -32,7 +32,7 @@ target_link_libraries("${CMAKE_PROJECT_NAME}" PUBLIC glfw glad glm assimp)
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 file(GLOB_RECURSE DEP CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/extern/imgui/*.cpp")
 
-target_sources("${CMAKE_PROJECT_NAME}" PRIVATE ${MY_SOURCES} )
+target_sources("${CMAKE_PROJECT_NAME}" PRIVATE ${MY_SOURCES})
 target_sources("${CMAKE_PROJECT_NAME}" PRIVATE ${DEP} )
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")

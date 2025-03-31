@@ -5,6 +5,11 @@
 #include "imgui_impl_opengl3.h"
 #include <glm/gtc/type_ptr.hpp>
 
+unsigned int Renderer::quadVAO = 0;
+unsigned int Renderer::quadVBO = 0;
+unsigned int Renderer::cubeVAO = 0;
+unsigned int Renderer::cubeVBO = 0;
+
 Renderer::Renderer()
 {
 }
@@ -52,6 +57,7 @@ void Renderer::init()
 	glDisable(GL_CULL_FACE);
 	//glCullFace(GL_BACK);
 
+	// Skybox settings
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 	m_pbrShader = std::make_shared<Shader>(RES_DIR "/shaders/basic_vert.glsl", RES_DIR  "/shaders/pbr_frag.glsl");
@@ -62,6 +68,18 @@ void Renderer::init()
 		m_pbrShader->setUniform3f("lightColor", m_lightColor.x, m_lightColor.y, m_lightColor.z);
 		glm::vec3 camPos = m_camera->getPosition();
 		m_pbrShader->setUniform3f("camPos", camPos.x, camPos.y, camPos.z);
+	}
+
+	m_quadShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/quad_frag.glsl");
+
+	// Initialize Geometry pass framebuffer
+	m_geometryFB = std::make_unique<Framebuffer>(window_width, window_height);
+	m_geometryFB->createColorAttachment(); // color
+	m_geometryFB->createColorAttachment(); // normal
+	m_geometryFB->addDepthAttachment();
+	m_geometryFB->setDrawBuffers();
+	if (!m_geometryFB->isComplete()) {
+		std::cerr << "Geometry framebuffer is incomplete" << std::endl;
 	}
 
 	m_initialized = true;
@@ -75,13 +93,25 @@ void Renderer::clear()
 
 void Renderer::render()
 {
+	// Geometry pass
 	if (m_currentScene)
 	{
+		m_geometryFB->bind();
+		clear();
 		glm::vec3 camPos = m_camera->getPosition();
 		m_pbrShader->bind();
 		m_pbrShader->setUniform3f("camPos", camPos.x, camPos.y, camPos.z); 
 		m_currentScene->draw(m_camera->getViewMatrix(), m_camera->getProjectionMatrix());
 	}
+
+	// Final pass
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	m_quadShader->bind();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_geometryFB->textures[0]);
+	m_quadShader->setUniform1i("screenTexture", 0);
+	renderQuad();
+	m_quadShader->unbind();
 }
 
 void Renderer::update()
