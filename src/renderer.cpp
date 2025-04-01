@@ -135,6 +135,39 @@ void Renderer::swapBuffers()
 
 void Renderer::renderUI()
 {
+	// Render Viewport
+	ImGui::Begin("Viewport");
+	ImVec2 viewportSize = ImGui::GetContentRegionAvail();
+
+	// Crop the viewport to a 16:9 aspect ratio
+	float aspectRatio = (float) window_width / (float)window_height;
+	float viewportAspectRatio = viewportSize.x / viewportSize.y;
+
+	float uMin = 0.0f;
+	float vMin = 0.0f;
+	float uMax = 1.0f;
+	float vMax = 1.0f;
+
+	if (viewportAspectRatio > aspectRatio) {
+		float scale = viewportSize.x / (viewportSize.y * aspectRatio);
+		float vCrop = (1.0f - 1.0f / scale) * 0.5f;
+		vMin = vCrop;
+		vMax = 1.0f - vCrop;
+	}
+	else if (viewportAspectRatio <= aspectRatio) {
+		float scale = (viewportSize.y * aspectRatio) / viewportSize.x;
+		float uCrop = (1.0f - 1.0f / scale) * 0.5f;
+		uMin = uCrop;
+		uMax = 1.0f - uCrop;
+	}
+
+	ImGui::Image((ImTextureID)(intptr_t)m_geometryFB->textures[0],
+		viewportSize,
+		ImVec2(uMin, vMax), 
+		ImVec2(uMax, vMin));
+	ImGui::End();
+
+	// Render UI
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }

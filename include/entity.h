@@ -8,7 +8,7 @@
 class Entity {
 public:
 	Entity();
-	Entity(std::shared_ptr<Mesh> mesh, Material material, glm::vec3 position) : m_mesh(mesh), m_material(material), position(position), useMaterial(true) {
+	Entity(std::shared_ptr<Mesh> mesh, Material material, glm::vec3 position, std::string name = "new entity") : m_mesh(mesh), m_material(material), position(position), useMaterial(true), m_name(name) {
 		/*if (material.shader) {
 			material.shader->bind();
 			material.shader->setUniformBool("useAlbedoTexture", material.useAlbedoMap);

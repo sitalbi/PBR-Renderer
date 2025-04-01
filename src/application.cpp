@@ -65,38 +65,49 @@ void Application::init()
 	m_meshes[MeshType::SPHERE] = m_sphereMesh;
 
 	// Create default material
-	Material m_basicMaterial;
-	m_basicMaterial.shader = m_renderer->getPBRShader();
-	m_basicMaterial.albedo = glm::vec3(1.0f, 0.0f, 0.0f);
-	m_basicMaterial.metallic = 0.01f;
-	m_basicMaterial.roughness = 0.9f;
-	m_basicMaterial.ao = 0.25f;
+	std::shared_ptr<Material> basicMat = std::make_shared<Material>();
+	basicMat->shader = m_renderer->getPBRShader();
+	basicMat->albedo = glm::vec3(1.0f, 0.0f, 0.0f);
+	basicMat->metallic = 0.01f;
+	basicMat->roughness = 0.9f;
+	basicMat->ao = 0.25f;
 
-	// Create textured material
-	Material m_texturedMaterial;
-	m_texturedMaterial.shader = m_renderer->getPBRShader();
+	// Create textured materials
+	std::shared_ptr<Material> lightgoldMat = std::make_shared<Material>();
+	lightgoldMat->shader = m_renderer->getPBRShader();
+	lightgoldMat->albedoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/lightgold_albedo.png");
+	lightgoldMat->normalMap = std::make_shared<Texture>(RES_DIR"/textures/materials/lightgold_normal-ogl.png");
+	lightgoldMat->metallicMap = std::make_shared<Texture>(RES_DIR"/textures/materials/lightgold_metallic.png");
+	lightgoldMat->roughnessMap = std::make_shared<Texture>(RES_DIR"/textures/materials/lightgold_roughness.png");
+	//lightgoldMat->aoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-ao.png");
+	lightgoldMat->ao = 0.5f;
 
-	// TODO: load materials from folder and create material class automatically by reading the existing files
-	m_texturedMaterial.albedoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/lightgold_albedo.png");
-	m_texturedMaterial.normalMap = std::make_shared<Texture>(RES_DIR"/textures/materials/lightgold_normal-ogl.png");
-	m_texturedMaterial.metallicMap = std::make_shared<Texture>(RES_DIR"/textures/materials/lightgold_metallic.png");
-	m_texturedMaterial.roughnessMap = std::make_shared<Texture>(RES_DIR"/textures/materials/lightgold_roughness.png");
-	//m_texturedMaterial.aoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-ao.png");
-	m_texturedMaterial.ao = 0.5f;
+	lightgoldMat->useAlbedoMap = true;
+	lightgoldMat->useNormalMap = true;
+	lightgoldMat->useMetalMap = true;
+	lightgoldMat->useRoughMap = true;
+	//lightgoldMat->useAoMap = true;
 
-	m_texturedMaterial.useAlbedoMap = true;
-	m_texturedMaterial.useNormalMap = true;
-	m_texturedMaterial.useMetalMap = true;
-	m_texturedMaterial.useRoughMap = true;
-	//m_texturedMaterial.useAoMap = true;
+	std::shared_ptr<Material> scuffedPlasticMat = std::make_shared<Material>();
+	scuffedPlasticMat->shader = m_renderer->getPBRShader();
+	scuffedPlasticMat->albedoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-alb.png");
+	scuffedPlasticMat->normalMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-normal.png");
+	scuffedPlasticMat->metallicMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-metal.png");
+	scuffedPlasticMat->roughnessMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-rough.png");
+	scuffedPlasticMat->aoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-ao.png");
+
+	// Set materials to map
+	m_materials["Default"] = basicMat;
+	m_materials["Light Gold"] = lightgoldMat;
+	m_materials["Scuffed Plastic"] = scuffedPlasticMat;
 
 	// Kabuto material
 	Material m_kabutoMaterial;
 	m_kabutoMaterial.shader = m_renderer->getPBRShader();
-	m_kabutoMaterial.albedoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/Material_baseColor.png");
-	m_kabutoMaterial.normalMap = std::make_shared<Texture>(RES_DIR"/textures/materials/Material_normal.png");
-	m_kabutoMaterial.metallicMap = std::make_shared<Texture>(RES_DIR"/textures/materials/Material_metallic.png");
-	m_kabutoMaterial.roughnessMap = std::make_shared<Texture>(RES_DIR"/textures/materials/Material_roughness.png");
+	m_kabutoMaterial.albedoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/kabuto/Material_baseColor.png");
+	m_kabutoMaterial.normalMap = std::make_shared<Texture>(RES_DIR"/textures/materials/kabuto/Material_normal.png");
+	m_kabutoMaterial.metallicMap = std::make_shared<Texture>(RES_DIR"/textures/materials/kabuto/Material_metallic.png");
+	m_kabutoMaterial.roughnessMap = std::make_shared<Texture>(RES_DIR"/textures/materials/kabuto/Material_roughness.png");
 	m_kabutoMaterial.ao = 0.5f;
 
 	m_kabutoMaterial.useAlbedoMap = true;
@@ -105,23 +116,23 @@ void Application::init()
 	m_kabutoMaterial.useRoughMap = true;
 
 	std::unique_ptr<Scene> scene = std::make_unique<Scene>();
-	/*scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(-5.0f, 0.0f, 0.0f)));
-	m_basicMaterial.metallic = 0.3f;
-	m_basicMaterial.roughness = 0.75f;
-	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(-2.5f, 0.0f, 0.0f)));
-	m_basicMaterial.metallic = 0.5f;
-	m_basicMaterial.roughness = 0.5f;
-	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(0.0f, 0.0f, 0.0f)));
-	m_basicMaterial.metallic = 0.75f;
-	m_basicMaterial.roughness = 0.25f;
-	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(2.5f, 0.0f, 0.0f)));
-	m_basicMaterial.metallic = 0.9f;
-	m_basicMaterial.roughness = 0.0f;
-	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_basicMaterial, glm::vec3(5.0f, 0.0f, 0.0f)));
+	/*scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], basicMat, glm::vec3(-5.0f, 0.0f, 0.0f)));
+	basicMat.metallic = 0.3f;
+	basicMat.roughness = 0.75f;
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], basicMat, glm::vec3(-2.5f, 0.0f, 0.0f)));
+	basicMat.metallic = 0.5f;
+	basicMat.roughness = 0.5f;
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], basicMat, glm::vec3(0.0f, 0.0f, 0.0f)));
+	basicMat.metallic = 0.75f;
+	basicMat.roughness = 0.25f;
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], basicMat, glm::vec3(2.5f, 0.0f, 0.0f)));
+	basicMat.metallic = 0.9f;
+	basicMat.roughness = 0.0f;
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], basicMat, glm::vec3(5.0f, 0.0f, 0.0f)));
 
-	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_texturedMaterial, glm::vec3(0.0f, 3.0f, 0.0f)));*/
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_lightgoldMat, glm::vec3(0.0f, 3.0f, 0.0f)));*/
 
-	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::KABUTO], m_kabutoMaterial, glm::vec3(0.0f, 0.0f, 0.0f)));
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::KABUTO], m_kabutoMaterial, glm::vec3(0.0f, 0.0f, 0.0f), "Kabuto"));
 
 	m_renderer->setCurrentScene(std::move(scene));
 }
@@ -138,7 +149,7 @@ void Application::initUI()
 	ImGui::CreateContext();
 
 	ImGuiIO& io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable;
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL(m_renderer->getWindow(), true);
@@ -155,21 +166,20 @@ void Application::updateUI()
 {
 	Camera* cam = m_renderer->getCamera();
 	std::unique_ptr<Scene>& currentScene = m_renderer->getCurrentScene();
+
+	// Start a new frame for ImGui
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	// Information Panel
-	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(300, 50), ImGuiCond_Always);
+	// Use main window as dock space
+    ImGui::DockSpaceOverViewport(ImGui::GetMainViewport()->ID);
 
-	ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
-	ImGui::Text("App average %.3f ms/frame (%.1f FPS)\n", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	// Info Panel 
+	ImGui::Begin("Info");
+	ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
+	ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
 	ImGui::End();
-
-	// Scene Editor panel
-	ImGui::SetNextWindowPos(ImVec2(10, 100), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(0, 400), ImGuiCond_Always);
 
 	ImGui::Begin("Scene Editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -254,17 +264,45 @@ void Application::updateUI()
 		ImGui::Combo("Mesh Type", &m_meshTypeIndex, m_meshTypes.data(), static_cast<int>(m_meshTypes.size()));
 		MeshType selectedMeshType = magic_enum::enum_value<MeshType>(m_meshTypeIndex);
 
-		if (ImGui::Button("Confirm Entity")) {
-			Material material;
-			material.shader = m_renderer->getPBRShader();
-			material.albedo = glm::vec3(1.0f, 0.0f, 0.0f);
-			material.metallic = 1.0f;
-			material.roughness = 0.1f;
-			material.ao = 0.1f;
+		// Combo box for materials using the unordered_map
+		std::vector<const char*> materialNames;
+		for (const auto& [key, value] : m_materials) {
+			materialNames.push_back(key.c_str());
+		}
+		static int materialIndex = 0;
+		ImGui::Combo("Material", &materialIndex, materialNames.data(), static_cast<int>(materialNames.size()));
+		Material material = *m_materials[materialNames[materialIndex]];
 
-			currentScene->addEntity(std::make_shared<Entity>(m_meshes[selectedMeshType], material, newPosition));
-			isAddingEntity = false;  
-			newPosition = glm::vec3(0.0f); 
+		// Text input for entity name
+		static char entityName[32];
+		ImGui::InputText("Name", entityName, IM_ARRAYSIZE(entityName));
+
+		if (ImGui::Button("Confirm Entity")) {
+			// Use mesh type as default name if none is provided
+			if (strlen(entityName) == 0) {
+				strcpy(entityName, m_meshTypes[m_meshTypeIndex]);
+			}
+
+			// Ensure the entity name is unique
+			std::string baseName(entityName);
+			int suffix = 1;
+			bool nameExists;
+			do {
+				nameExists = false;
+				for (const auto& entity : currentScene->getEntities()) {
+					if (entity->getName() == entityName) {
+						// Generate a new name with a numeric suffix
+						snprintf(entityName, sizeof(entityName), "%s%d", baseName.c_str(), suffix);
+						++suffix;
+						nameExists = true;
+						break;
+					}
+				}
+			} while (nameExists);
+
+			currentScene->addEntity(std::make_shared<Entity>(m_meshes[selectedMeshType], material, newPosition, entityName));
+			isAddingEntity = false;
+			newPosition = glm::vec3(0.0f);
 		}
 
 		if (ImGui::Button("Cancel")) {
@@ -272,6 +310,10 @@ void Application::updateUI()
 			newPosition = glm::vec3(0.0f); 
 		}
 		ImGui::End();
+
+		// reset material index and entity name
+		materialIndex = 0;
+		memset(entityName, 0, sizeof(entityName));
 	}
 
 }

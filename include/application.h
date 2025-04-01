@@ -31,11 +31,11 @@ private:
 
 	std::unordered_map<MeshType, std::shared_ptr<Mesh>> m_meshes;
 
+	std::unordered_map<std::string, std::shared_ptr<Material>> m_materials;
+
 	
 	std::vector<const char*> m_meshTypes;
 	int m_meshTypeIndex = 0;
-
-	std::shared_ptr<Material> m_basicMaterial;
 
 	void initUI();
 	void updateUI();
