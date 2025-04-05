@@ -9,3 +9,4 @@ TODO:
 - Shadows
 - Deferred rendering
 - Scene save/load 
+- multiple lights and types
