@@ -156,7 +156,7 @@ private:
 	std::unique_ptr<Shader> m_ssaoShader;
 	std::unique_ptr<Shader> m_ssaoBlurShader;
 
-	std::unique_ptr<Framebuffer> m_gBuffer;
+	std::unique_ptr<Framebuffer> m_geometryFB;
 	std::unique_ptr<Framebuffer> m_ssaoFB;
 	std::unique_ptr<Framebuffer> m_ssaoBlurFB;
 	std::unique_ptr<Framebuffer> m_finalFB;

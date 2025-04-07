@@ -3,8 +3,8 @@ out vec4 FragColor;
 
 in vec2 TexCoords;
 
-uniform sampler2D screenTexture; // The rendered scene color
-uniform sampler2D ssaoTexture;    // The SSAO result (typically a grayscale occlusion factor)
+uniform sampler2D screenTexture; 
+uniform sampler2D ssaoTexture;   
 
 uniform bool useSSAO; // Flag to enable/disable SSAO
 

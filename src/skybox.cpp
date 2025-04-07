@@ -88,6 +88,7 @@ Skybox::~Skybox()
 void Skybox::draw(const glm::mat4& view, const glm::mat4& projection)
 {
 	// Draw skybox
+	glDepthMask(GL_FALSE);  // Don't write to depth buffer
 	glDisable(GL_CULL_FACE);
 	m_skyboxShader->bind();
 	m_skyboxShader->setUniformMat4f("view", view);
@@ -98,6 +99,7 @@ void Skybox::draw(const glm::mat4& view, const glm::mat4& projection)
 	glBindVertexArray(m_skyboxVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
+	glDepthMask(GL_TRUE);  // Re-enable depth writing
 }
 
 void Skybox::bindTextures()

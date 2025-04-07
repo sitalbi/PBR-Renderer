@@ -18,6 +18,7 @@ void Scene::draw(const glm::mat4& view, const glm::mat4& projection)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
+
 	if (m_skybox) {
 		m_skybox->bindTextures();
 	}
@@ -26,6 +27,11 @@ void Scene::draw(const glm::mat4& view, const glm::mat4& projection)
 	for (auto& entity : m_entities)
 	{
 		entity->draw(view, projection);
+	}
+
+	// Draw skybox
+	if (m_skybox) {
+		m_skybox->draw(view, projection);
 	}
 }
 

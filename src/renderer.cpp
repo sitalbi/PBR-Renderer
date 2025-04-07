@@ -55,7 +55,6 @@ void Renderer::init()
 	glDepthFunc(GL_LEQUAL);
 
 	glDisable(GL_CULL_FACE);
-	//glCullFace(GL_BACK);
 
 	// Skybox settings
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -77,13 +76,13 @@ void Renderer::init()
 	m_ssaoBlurShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/ssao_blur_frag.glsl");
 
 	// Initialize Geometry pass framebuffer
-	m_gBuffer = std::make_unique<Framebuffer>(window_width, window_height);
-	m_gBuffer->createColorAttachment(); // color
-	m_gBuffer->createColorAttachment(); // normal
-	m_gBuffer->createColorAttachment(); // position
-	m_gBuffer->addDepthTexture();
-	m_gBuffer->setDrawBuffers();
-	if (!m_gBuffer->isComplete()) {
+	m_geometryFB = std::make_unique<Framebuffer>(window_width, window_height);
+	m_geometryFB->createColorAttachment(); // color
+	m_geometryFB->createColorAttachment(); // normal
+	m_geometryFB->createColorAttachment(); // position
+	m_geometryFB->addDepthTexture();
+	m_geometryFB->setDrawBuffers();
+	if (!m_geometryFB->isComplete()) {
 		std::cerr << "Geometry framebuffer is incomplete" << std::endl;
 	}
 
@@ -175,7 +174,7 @@ void Renderer::render()
 	// Geometry pass into G-Buffer
 	if (m_currentScene)
 	{
-		m_gBuffer->bind();
+		m_geometryFB->bind();
 		glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glm::vec3 camPos = m_camera->getPosition();
@@ -187,13 +186,13 @@ void Renderer::render()
 	// SSAO pass
 	if (useSSAO) {
 		m_ssaoFB->bind();
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		m_ssaoShader->bind();
 		glActiveTexture(GL_TEXTURE10);
-		glBindTexture(GL_TEXTURE_2D, m_gBuffer->textures[2]); // position
+		glBindTexture(GL_TEXTURE_2D, m_geometryFB->textures[2]); // position
 		m_ssaoShader->setUniform1i("gPosition", 10);
 		glActiveTexture(GL_TEXTURE11);
-		glBindTexture(GL_TEXTURE_2D, m_gBuffer->textures[1]); // normal
+		glBindTexture(GL_TEXTURE_2D, m_geometryFB->textures[1]); // normal
 		m_ssaoShader->setUniform1i("gNormal", 11);
 		glActiveTexture(GL_TEXTURE12);
 		glBindTexture(GL_TEXTURE_2D, m_ssaoNoiseTexture);
@@ -204,7 +203,7 @@ void Renderer::render()
 
 		// SSAO blur pass to improve quality
 		m_ssaoBlurFB->bind();
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		m_ssaoBlurShader->bind();
 		glActiveTexture(GL_TEXTURE12);
 		glBindTexture(GL_TEXTURE_2D, m_ssaoFB->textures[0]); // SSAO
@@ -217,7 +216,7 @@ void Renderer::render()
 	clear();
 	m_compositeShader->bind();
 	glActiveTexture(GL_TEXTURE13);
-	glBindTexture(GL_TEXTURE_2D, m_gBuffer->textures[0]);
+	glBindTexture(GL_TEXTURE_2D, m_geometryFB->textures[0]);
 	m_compositeShader->setUniform1i("screenTexture", 13);
 	if (useSSAO) {
 		m_compositeShader->setUniform1i("useSSAO", 1);
