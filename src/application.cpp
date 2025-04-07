@@ -1,4 +1,4 @@
-#include "application.h"
+﻿#include "application.h"
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <iostream>
@@ -47,22 +47,18 @@ void Application::init()
 	setCallbacks();
 
 	// Create default meshes
-	std::shared_ptr<Mesh> m_cubeMesh = std::make_shared<Mesh>();
-	m_cubeMesh->loadCube();
 	std::shared_ptr<Mesh> m_sphereMesh = std::make_shared<Mesh>();
 	m_sphereMesh->loadSphere(1.0f, 50);
+	m_meshes[MeshType::Sphere] = m_sphereMesh;
 
 
 	std::shared_ptr<Mesh> m_suzanneMesh = std::make_shared<Mesh>();
 	m_suzanneMesh->loadModel(RES_DIR"/models/suzanne.obj");
-	m_meshes[MeshType::SUZANNE] = m_suzanneMesh;
+	m_meshes[MeshType::Suzanne] = m_suzanneMesh;
 
 	std::shared_ptr<Mesh> m_kabutoMesh = std::make_shared<Mesh>();
 	m_kabutoMesh->loadModel(RES_DIR"/models/kabuto.obj");
-	m_meshes[MeshType::KABUTO] = m_kabutoMesh;
-
-	m_meshes[MeshType::CUBE] = m_cubeMesh;
-	m_meshes[MeshType::SPHERE] = m_sphereMesh;
+	m_meshes[MeshType::Kabuto] = m_kabutoMesh;
 
 	// Create default material
 	std::shared_ptr<Material> basicMat = std::make_shared<Material>();
@@ -95,6 +91,12 @@ void Application::init()
 	scuffedPlasticMat->metallicMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-metal.png");
 	scuffedPlasticMat->roughnessMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-rough.png");
 	scuffedPlasticMat->aoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/scuffed-plastic-ao.png");
+
+	scuffedPlasticMat->useAlbedoMap = true;
+	scuffedPlasticMat->useNormalMap = true;
+	scuffedPlasticMat->useMetalMap = true;
+	scuffedPlasticMat->useRoughMap = true;
+	scuffedPlasticMat->useAoMap = true;
 
 	// Set materials to map
 	m_materials["Default"] = basicMat;
@@ -132,7 +134,7 @@ void Application::init()
 
 	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_lightgoldMat, glm::vec3(0.0f, 3.0f, 0.0f)));*/
 
-	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::KABUTO], m_kabutoMaterial, glm::vec3(0.0f, 0.0f, 0.0f), "Kabuto"));
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::Kabuto], m_kabutoMaterial, glm::vec3(0.0f, 0.0f, 0.0f), "Kabuto"));
 
 	m_renderer->setCurrentScene(std::move(scene));
 }
@@ -154,6 +156,8 @@ void Application::initUI()
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL(m_renderer->getWindow(), true);
 	ImGui_ImplOpenGL3_Init("#version 450");
+
+	setupImGuiStyle();
 
 	// Setup mesh selecction dropdown data
 	auto meshTypeNames = magic_enum::enum_names<MeshType>(); 
@@ -179,9 +183,10 @@ void Application::updateUI()
 	ImGui::Begin("Info");
 	ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
 	ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
+	ImGui::Checkbox("SSAO", &m_renderer->useSSAO);
 	ImGui::End();
 
-	ImGui::Begin("Scene Editor", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+	ImGui::Begin("Scene Editor");
 
 	// Entity list
 	for (auto& entity : currentScene->getEntities()) {
@@ -256,7 +261,6 @@ void Application::updateUI()
 	ImGui::End();
 
 	if (isAddingEntity) {
-		ImGui::SetNextWindowPos(ImVec2(100, 600), ImGuiCond_Always);
 
 		ImGui::Begin("Create Entity", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
 		ImGui::InputFloat3("Position", glm::value_ptr(newPosition));
@@ -303,6 +307,10 @@ void Application::updateUI()
 			currentScene->addEntity(std::make_shared<Entity>(m_meshes[selectedMeshType], material, newPosition, entityName));
 			isAddingEntity = false;
 			newPosition = glm::vec3(0.0f);
+
+			// reset material index and entity name
+			materialIndex = 0;
+			memset(entityName, 0, sizeof(entityName));
 		}
 
 		if (ImGui::Button("Cancel")) {
@@ -310,10 +318,6 @@ void Application::updateUI()
 			newPosition = glm::vec3(0.0f); 
 		}
 		ImGui::End();
-
-		// reset material index and entity name
-		materialIndex = 0;
-		memset(entityName, 0, sizeof(entityName));
 	}
 
 }
@@ -361,6 +365,12 @@ void Application::processInput(float deltaTime)
 		if (glfwGetKey(m_renderer->getWindow(), GLFW_KEY_D) == GLFW_PRESS) {
 			cam->moveRight(deltaTime);
 		}
+		if (glfwGetKey(m_renderer->getWindow(), GLFW_KEY_SPACE) == GLFW_PRESS) {
+			cam->moveUp(deltaTime);
+		}
+		if (glfwGetKey(m_renderer->getWindow(), GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+			cam->moveDown(deltaTime);
+		}
 	}
 }
 
@@ -383,3 +393,71 @@ void Application::deltaTime()
 	m_lastFrame = m_currentFrame;
 }
 
+void Application::setupImGuiStyle()
+{
+	ImGui::StyleColorsDark();  // Set the base style first
+
+	// Get the current style reference
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	// General layout adjustments for a clean look
+	style.WindowPadding = ImVec2(10, 10);
+	style.WindowRounding = 5;
+	style.FramePadding = ImVec2(5, 5);
+	style.FrameRounding = 4;
+	style.ItemSpacing = ImVec2(8, 8);
+	style.ItemInnerSpacing = ImVec2(4, 4);
+	style.IndentSpacing = 20;
+	style.ScrollbarSize = 12;
+	style.ScrollbarRounding = 5;
+	style.GrabMinSize = 10;
+	style.GrabRounding = 3;
+
+	// Set up a custom color palette
+	ImVec4* colors = style.Colors;
+	colors[ImGuiCol_Text] = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
+	colors[ImGuiCol_WindowBg] = ImVec4(0.11f, 0.11f, 0.12f, 1.00f);
+	colors[ImGuiCol_Border] = ImVec4(0.35f, 0.35f, 0.35f, 1.00f);
+	colors[ImGuiCol_FrameBg] = ImVec4(0.20f, 0.20f, 0.21f, 1.00f);
+	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.30f, 0.30f, 0.31f, 1.00f);
+	colors[ImGuiCol_FrameBgActive] = ImVec4(0.25f, 0.25f, 0.26f, 1.00f);
+	colors[ImGuiCol_TitleBg] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+	colors[ImGuiCol_TitleBgActive] = ImVec4(0.20f, 0.20f, 0.21f, 1.00f);
+	colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+	colors[ImGuiCol_MenuBarBg] = ImVec4(0.13f, 0.13f, 0.14f, 1.00f);
+	colors[ImGuiCol_ScrollbarBg] = ImVec4(0.05f, 0.05f, 0.06f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.30f, 0.30f, 0.31f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.40f, 0.40f, 0.41f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.50f, 0.50f, 0.51f, 1.00f);
+	colors[ImGuiCol_CheckMark] = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
+	colors[ImGuiCol_SliderGrab] = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
+	colors[ImGuiCol_SliderGrabActive] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+	colors[ImGuiCol_Button] = ImVec4(0.20f, 0.20f, 0.21f, 1.00f);
+	colors[ImGuiCol_ButtonHovered] = ImVec4(0.30f, 0.30f, 0.31f, 1.00f);
+	colors[ImGuiCol_ButtonActive] = ImVec4(0.25f, 0.25f, 0.26f, 1.00f);
+	colors[ImGuiCol_Header] = ImVec4(0.20f, 0.20f, 0.21f, 1.00f);
+	colors[ImGuiCol_HeaderHovered] = ImVec4(0.30f, 0.30f, 0.31f, 1.00f);
+	colors[ImGuiCol_HeaderActive] = ImVec4(0.25f, 0.25f, 0.26f, 1.00f);
+	colors[ImGuiCol_Separator] = ImVec4(0.35f, 0.35f, 0.35f, 1.00f);
+	colors[ImGuiCol_SeparatorHovered] = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
+	colors[ImGuiCol_SeparatorActive] = ImVec4(0.55f, 0.55f, 0.55f, 1.00f);
+	colors[ImGuiCol_ResizeGrip] = ImVec4(0.35f, 0.35f, 0.35f, 1.00f);
+	colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
+	colors[ImGuiCol_ResizeGripActive] = ImVec4(0.55f, 0.55f, 0.55f, 1.00f);
+	colors[ImGuiCol_Tab] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+	colors[ImGuiCol_TabHovered] = ImVec4(0.30f, 0.30f, 0.31f, 1.00f);
+	colors[ImGuiCol_TabActive] = ImVec4(0.20f, 0.20f, 0.21f, 1.00f);
+	colors[ImGuiCol_TabUnfocused] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+	colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.20f, 0.20f, 0.21f, 1.00f);
+	colors[ImGuiCol_PlotLines] = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
+	colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.50f, 0.00f, 1.00f);
+	colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.90f, 0.90f, 1.00f);
+	colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.50f, 0.00f, 1.00f);
+	colors[ImGuiCol_TextSelectedBg] = ImVec4(0.30f, 0.30f, 0.31f, 1.00f);
+	colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
+	colors[ImGuiCol_NavHighlight] = colors[ImGuiCol_HeaderHovered];
+	colors[ImGuiCol_NavWindowingHighlight] = colors[ImGuiCol_HeaderHovered];
+	colors[ImGuiCol_NavWindowingDimBg] = colors[ImGuiCol_Header];
+	colors[ImGuiCol_ModalWindowDimBg] = colors[ImGuiCol_WindowBg];
+
+}

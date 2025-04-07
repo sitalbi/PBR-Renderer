@@ -18,6 +18,8 @@ public:
 
 	void draw(const glm::mat4& view, const glm::mat4& projection);
 
+	void drawSkybox(const glm::mat4& view, const glm::mat4& projection);
+
 private:
 	std::vector<std::shared_ptr<Entity>> m_entities;
 

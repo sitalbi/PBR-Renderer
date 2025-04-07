@@ -27,7 +27,10 @@ void Scene::draw(const glm::mat4& view, const glm::mat4& projection)
 	{
 		entity->draw(view, projection);
 	}
+}
 
+void Scene::drawSkybox(const glm::mat4& view, const glm::mat4& projection)
+{
 	if (m_skybox) {
 		m_skybox->draw(view, projection);
 	}

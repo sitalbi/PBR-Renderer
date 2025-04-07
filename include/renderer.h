@@ -131,6 +131,8 @@ public:
         glBindVertexArray(0);
     }
 
+	bool useSSAO = false;
+
 private:
     static unsigned int cubeVAO;
     static unsigned int cubeVBO;
@@ -150,11 +152,17 @@ private:
 
 	std::shared_ptr<Shader> m_basicShader;
 	std::shared_ptr<Shader> m_pbrShader;
-	std::unique_ptr<Shader> m_quadShader;
+	std::unique_ptr<Shader> m_compositeShader;
+	std::unique_ptr<Shader> m_ssaoShader;
+	std::unique_ptr<Shader> m_ssaoBlurShader;
 
-	std::unique_ptr<Framebuffer> m_geometryFB;
+	std::unique_ptr<Framebuffer> m_gBuffer;
 	std::unique_ptr<Framebuffer> m_ssaoFB;
-    
+	std::unique_ptr<Framebuffer> m_ssaoBlurFB;
+	std::unique_ptr<Framebuffer> m_finalFB;
+
+	unsigned int m_ssaoNoiseTexture;
+    std::vector<glm::vec3> ssaoKernel;
 
 	void clear();
 	void render();

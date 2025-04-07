@@ -50,6 +50,8 @@ public:
 	void moveBackward(float deltaTime);
 	void moveRight(float deltaTime);
 	void moveLeft(float deltaTime);
+	void moveUp(float deltaTime);
+	void moveDown(float deltaTime);
 
 	void zoom(float yoffset);
 

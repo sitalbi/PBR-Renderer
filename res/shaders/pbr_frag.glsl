@@ -2,11 +2,14 @@
 
 layout (location = 0) out vec4 gColor;
 layout (location = 1) out vec4 gNormal;
+layout (location = 2) out vec4 gPosition;
 
 in vec2 TexCoords;
 in vec3 WorldPos;
 in vec3 Normal;
 in mat3 TBN;
+in vec3 ViewPos;
+in mat4 VM;
 
 uniform vec3 camPos;
 
@@ -81,6 +84,8 @@ void main()
         N = normalize(TBN * tangentNormal);
     }
 
+    vec3 viewSpaceN = normalize(mat3(VM) * N); // transform normal to view space for output gNormal
+
 	vec3 V = normalize(camPos - WorldPos);
     
     vec3 F0 = vec3(0.04);
@@ -135,7 +140,8 @@ void main()
     color = pow(color, vec3(1.0/2.2));
     
     gColor = vec4(color, 1.0);
-    gNormal = vec4(N, 1.0);
+    gNormal = vec4(normalize(viewSpaceN), 1.0); // normal in view space
+    gPosition = vec4(ViewPos, 1.0); // position in view space
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)

@@ -97,3 +97,12 @@ void Camera::moveLeft(float deltaTime)
 	m_position -= m_right * m_speed * deltaTime;
 }
 
+void Camera::moveUp(float deltaTime)
+{
+	m_position += m_up * m_speed * deltaTime;
+}
+
+void Camera::moveDown(float deltaTime)
+{
+	m_position -= m_up * m_speed * deltaTime;
+}

@@ -43,4 +43,6 @@ private:
 	void setCallbacks();
 
 	void deltaTime();
+
+	void setupImGuiStyle();
 };

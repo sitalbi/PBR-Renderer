@@ -6,6 +6,7 @@
 #include <sstream>
 #include <vector>
 #include <iostream>
+#include <glm/gtc/type_ptr.hpp>
 
 Shader::Shader(const std::string& vertexFilePath, const std::string& fragmentFilePath)
     : m_vertexFilePath(vertexFilePath), m_fragmentFilePath(fragmentFilePath), m_shaderID(0)
@@ -214,4 +215,13 @@ void Shader::setUniformBool(const std::string& name, bool value)
         glUniform1i(location, value);
     else
         std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
+}
+
+void Shader::setUniform3fv(const std::string& name, const std::vector<glm::vec3> vector, int count)
+{
+	int location = getUniformLocation(name);
+	if (location != -1)
+		glUniform3fv(location, count, glm::value_ptr(vector[0]));
+	else
+		std::cerr << "Warning: Uniform '" << name << "' not found in shader." << std::endl;
 }

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include <glm/glm.hpp>
 
 class Shader
@@ -34,4 +35,5 @@ public:
 	void setUniformMat4f(const std::string& name, const glm::mat4& matrix);
 	void setUniformVec3f(const std::string& name, const glm::vec3& vector);
 	void setUniformBool(const std::string& name, bool value);
+	void setUniform3fv(const std::string& name, const std::vector<glm::vec3> vector, int count);
 };

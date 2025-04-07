@@ -10,3 +10,9 @@ TODO:
 - Deferred rendering
 - Scene save/load 
 - multiple lights and types
+
+Credits:
+
+- learnopengl.com (https://learnopengl.com/)
+- john-chapman-graphics blog (http://john-chapman-graphics.blogspot.com/2013/01/ssao-tutorial.html)
+- PBR Kabuto [Samurai Helmet](https://sketchfab.com/3d-models/pbr-kabuto-samurai-helmet-13b3ab49b6bd4247be36b54ba1a56d8a) by [LeahLindner](https://sketchfab.com/illation) licensed under CC-BY-NC-ND-4.0 (http://creativecommons.org/licenses/by-nc-nd/4.0/)

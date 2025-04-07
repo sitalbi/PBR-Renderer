@@ -16,6 +16,8 @@ public:
 	std::vector<unsigned int> textures;
 	std::vector<unsigned int> attachments;
 
+	unsigned int depthTexture;
+
 	Framebuffer(int width, int height);
 
 	~Framebuffer();
@@ -32,7 +34,8 @@ public:
 
 	void addColorAttachment(unsigned int textureID);
 
-	void addDepthAttachment();
+	void addDepthRenderBuffer();
+	void addDepthTexture();
 
 	void setDrawBuffers();
 

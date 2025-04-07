@@ -7,10 +7,9 @@
 
 enum class MeshType
 {
-	CUBE,
-	SPHERE,
-	SUZANNE,
-	KABUTO
+	Sphere,
+	Suzanne,
+	Kabuto
 };
 
 class Mesh
@@ -23,7 +22,6 @@ public:
 	void setupMesh();
 	void loadModel(const std::string& path);
 	void draw();
-	void loadCube();
 	void loadSphere(float radius, unsigned int segments);
 
 private:
