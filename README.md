@@ -5,6 +5,9 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 
 ***Note***: *this project is mainly a learning exercise and is not intended for production use. The goal was for me to have a project where I could try to design a renderer and its base architecture as well as implement various PBR techniques using OpenGL. It is not fully optimized for performance and can contain bugs.*
 
+## Images
+![renderer_image](https://simono.fr/renderer.png)
+
 ## Features:
 - Cook-Torrance BRDF model
 - Material system with texture support
