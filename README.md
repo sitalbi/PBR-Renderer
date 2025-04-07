@@ -28,6 +28,7 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 - Scene save/load 
 - multiple lights and types
 - make tone mapping gamma correction in post processing pass
+- Bloom + emissives entities
 
 ## Credits:
 
