@@ -29,6 +29,7 @@ struct Material {
     float metallic;
     float roughness;
     float ao;
+    vec3 emissiveColor;
 
     sampler2D albedoMap;
     sampler2D normalMap;
@@ -86,6 +87,8 @@ void main()
 
     vec3 viewSpaceN = normalize(mat3(VM) * N); // transform normal to view space for output gNormal
 
+    vec3 emissive = material.emissiveColor;
+
 	vec3 V = normalize(camPos - WorldPos);
     
     vec3 F0 = vec3(0.04);
@@ -134,10 +137,12 @@ void main()
     vec3 ambient    = (kD*diffuse+specularIBL)*ao; 
 
     vec3 color = ambient + Lo;
+    color += emissive; 
     
-    // gamma correction
-    color = color / (color + vec3(1.0));
-    color = pow(color, vec3(1.0/2.2));
+//    // tone mapping
+//    color = color / (color + vec3(1.0));
+//    // gamma correction
+//    color = pow(color, vec3(1.0/2.2));
     
     gColor = vec4(color, 1.0);
     gNormal = vec4(normalize(viewSpaceN), 1.0); // normal in view space

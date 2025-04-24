@@ -15,10 +15,17 @@ void main()
    
     vec4 finalColor = vec4(0.0);
     if (useSSAO) {
-        finalColor = sceneColor * ssao;
+        if(ssao != 0) {
+            // Apply SSAO effect
+            finalColor = vec4(sceneColor.rgb * ssao, sceneColor.a);
+        } else {
+            // If SSAO is zero, just use the scene color
+            finalColor = sceneColor;
+        }
     } else {
         finalColor = sceneColor;
     }
+
     FragColor = finalColor;
     
 }

@@ -51,6 +51,9 @@ void Application::init()
 	m_sphereMesh->loadSphere(1.0f, 50);
 	m_meshes[MeshType::Sphere] = m_sphereMesh;
 
+	std::shared_ptr<Mesh> m_cubeMesh = std::make_shared<Mesh>();
+	m_cubeMesh->loadCube(1.0f);
+	m_meshes[MeshType::Cube] = m_cubeMesh;
 
 	std::shared_ptr<Mesh> m_suzanneMesh = std::make_shared<Mesh>();
 	m_suzanneMesh->loadModel(RES_DIR"/models/suzanne.obj");
@@ -64,9 +67,10 @@ void Application::init()
 	std::shared_ptr<Material> basicMat = std::make_shared<Material>();
 	basicMat->shader = m_renderer->getPBRShader();
 	basicMat->albedo = glm::vec3(1.0f, 0.0f, 0.0f);
-	basicMat->metallic = 0.01f;
-	basicMat->roughness = 0.9f;
+	basicMat->metallic = 0.5f;
+	basicMat->roughness = 0.5f;
 	basicMat->ao = 0.25f;
+	basicMat->emissiveColor = glm::vec3(3.0f, 3.0f, 3.0f);
 
 	// Create textured materials
 	std::shared_ptr<Material> lightgoldMat = std::make_shared<Material>();
@@ -130,11 +134,10 @@ void Application::init()
 	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], basicMat, glm::vec3(2.5f, 0.0f, 0.0f)));
 	basicMat.metallic = 0.9f;
 	basicMat.roughness = 0.0f;
-	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], basicMat, glm::vec3(5.0f, 0.0f, 0.0f)));
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], basicMat, glm::vec3(5.0f, 0.0f, 0.0f)));*/
 
-	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::SPHERE], m_lightgoldMat, glm::vec3(0.0f, 3.0f, 0.0f)));*/
-
-	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::Kabuto], m_kabutoMaterial, glm::vec3(0.0f, 0.0f, 0.0f), "Kabuto"));
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::Kabuto], m_kabutoMaterial, glm::vec3(5.0f, 0.0f, 0.0f), "Kabuto"));
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::Sphere], *basicMat, glm::vec3(0.0f, 0.0f, 0.0f), "Sphere"));
 
 	m_renderer->setCurrentScene(std::move(scene));
 }
@@ -183,7 +186,13 @@ void Application::updateUI()
 	ImGui::Begin("Info");
 	ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
 	ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
+	ImGui::End();
+
+	ImGui::Begin("Post-Processing");
 	ImGui::Checkbox("SSAO", &m_renderer->useSSAO);
+	ImGui::Checkbox("Bloom", &m_renderer->useBloom);
+	ImGui::SetNextItemWidth(100.0f);
+	ImGui::SliderFloat("Exposure", &m_renderer->exposure, 0.01f, 1.0f);
 	ImGui::End();
 
 	ImGui::Begin("Scene Editor");
@@ -217,6 +226,7 @@ void Application::updateUI()
 				else {
 					ImGui::Text("AO Map");
 				}
+				ImGui::ColorEdit3("Emissive Color", glm::value_ptr(material.emissiveColor), ImGuiColorEditFlags_HDR);
 				ImGui::TreePop();
 			}
 			if (ImGui::TreeNode("Transform")) {
@@ -420,7 +430,7 @@ void Application::setupImGuiStyle()
 	colors[ImGuiCol_Border] = ImVec4(0.35f, 0.35f, 0.35f, 1.00f);
 	colors[ImGuiCol_FrameBg] = ImVec4(0.20f, 0.20f, 0.21f, 1.00f);
 	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.30f, 0.30f, 0.31f, 1.00f);
-	colors[ImGuiCol_FrameBgActive] = ImVec4(0.25f, 0.25f, 0.26f, 1.00f);
+	colors[ImGuiCol_FrameBgActive] = ImVec4(0.25f, 0.25f, 0.25f, 1.00f);
 	colors[ImGuiCol_TitleBg] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
 	colors[ImGuiCol_TitleBgActive] = ImVec4(0.20f, 0.20f, 0.21f, 1.00f);
 	colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);

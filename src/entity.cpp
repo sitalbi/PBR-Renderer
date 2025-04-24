@@ -39,8 +39,8 @@ void Entity::draw(const glm::mat4& view, const glm::mat4& projection)
 	// Ambient Occlusion
 	m_material.shader->setUniform1f("material.ao", m_material.ao);
 
-	//// Emissive (Not implemented yet)
-	////m_material.shader->setUniform3f("emissiveColor", m_material.emissiveColor.x, m_material.emissiveColor.y, m_material.emissiveColor.z);
+	// Emissive
+	m_material.shader->setUniform3f("material.emissiveColor", m_material.emissiveColor.x, m_material.emissiveColor.y, m_material.emissiveColor.z);
 
 
 	// Set material properties to shader

@@ -51,7 +51,7 @@ void main()
         float sampleDepth = texture(gPosition, offset.xy).z;
         
         float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
-        occlusion += (sampleDepth >= sampleVec.z + 0.001 ? 1.0 : 0.0) * rangeCheck; // can tweak bias 
+        occlusion += (sampleDepth >= sampleVec.z + 0.001 ? 1.0 : 0.0) * rangeCheck;
     }
     
 

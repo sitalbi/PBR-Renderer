@@ -11,6 +11,8 @@
 #define window_width 1920
 #define window_height 1080
 
+class BloomRenderer;
+
 class Renderer
 {
 public:
@@ -132,6 +134,8 @@ public:
     }
 
 	bool useSSAO = false;
+	bool useBloom = true;
+	float exposure = 0.5f;
 
 private:
     static unsigned int cubeVAO;
@@ -152,14 +156,21 @@ private:
 
 	std::shared_ptr<Shader> m_basicShader;
 	std::shared_ptr<Shader> m_pbrShader;
-	std::unique_ptr<Shader> m_compositeShader;
+	std::unique_ptr<Shader> m_lightingShader;
 	std::unique_ptr<Shader> m_ssaoShader;
 	std::unique_ptr<Shader> m_ssaoBlurShader;
+	std::unique_ptr<Shader> m_brightShader;
+	std::unique_ptr<Shader> m_finalCompoShader;
 
+    std::unique_ptr<Framebuffer> m_backgroundFB;
 	std::unique_ptr<Framebuffer> m_geometryFB;
 	std::unique_ptr<Framebuffer> m_ssaoFB;
 	std::unique_ptr<Framebuffer> m_ssaoBlurFB;
-	std::unique_ptr<Framebuffer> m_finalFB;
+	std::unique_ptr<Framebuffer> m_brightFB;
+	std::unique_ptr<Framebuffer> m_lightingFB;
+	std::unique_ptr<Framebuffer> m_postProcessFB;
+
+	std::unique_ptr<BloomRenderer> m_bloomRenderer;
 
 	unsigned int m_ssaoNoiseTexture;
     std::vector<glm::vec3> ssaoKernel;
@@ -169,4 +180,37 @@ private:
 	void swapBuffers();
 
 	void renderUI();
+};
+
+struct BloomMip
+{
+    glm::vec2 size;
+    glm::ivec2 intSize;
+    unsigned int texture;
+};
+
+class BloomRenderer
+{
+public:
+    BloomRenderer();
+    ~BloomRenderer();
+    bool init(unsigned int windowWidth, unsigned int windowHeight, unsigned int numMips);
+    void destroy();
+    void renderBloomTexture(unsigned int srcTexture, float filterRadius);
+    unsigned int bloomTexture();
+
+private:
+    void renderDownsamples(unsigned int srcTexture);
+    void renderUpsamples(float filterRadius);
+
+    bool m_init = false;
+    glm::ivec2 m_srcViewportSize;
+    glm::vec2 m_srcViewportSizeFloat;
+    std::unique_ptr<Shader> m_downsampleShader;
+    std::unique_ptr<Shader> m_upsampleShader;
+
+	std::vector<BloomMip> m_mipChain;
+
+	unsigned int m_bloomFBO;
+	unsigned int m_depthBuffer;
 };

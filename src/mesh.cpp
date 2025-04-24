@@ -110,6 +110,137 @@ void Mesh::loadSphere(float radius, unsigned int segments)
 	setupMesh();
 }
 
+void Mesh::loadCube(float size)
+{
+	m_vertices.clear();
+	m_indices.clear();
+
+	float half = size * 0.5f;
+
+	// Front face (z = +half)
+	{
+		glm::vec3 normal(0.0f, 0.0f, 1.0f);
+		glm::vec3 tangent(1.0f, 0.0f, 0.0f);
+		glm::vec3 bitangent(0.0f, -1.0f, 0.0f);
+		// UVs go from (0,0) to (1,1)
+		m_vertices.push_back(Vertex(glm::vec3(-half, -half, half), normal, glm::vec2(0.0f, 0.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(half, -half, half), normal, glm::vec2(1.0f, 0.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(half, half, half), normal, glm::vec2(1.0f, 1.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(-half, half, half), normal, glm::vec2(0.0f, 1.0f), tangent, bitangent));
+
+		// Indices: (0,1,2) and (2,3,0) for this face
+		unsigned int baseIndex = 0;
+		m_indices.push_back(baseIndex + 0);
+		m_indices.push_back(baseIndex + 1);
+		m_indices.push_back(baseIndex + 2);
+		m_indices.push_back(baseIndex + 2);
+		m_indices.push_back(baseIndex + 3);
+		m_indices.push_back(baseIndex + 0);
+	}
+
+	// Back face (z = -half)
+	{
+		glm::vec3 normal(0.0f, 0.0f, -1.0f);
+
+		glm::vec3 tangent(-1.0f, 0.0f, 0.0f);
+		glm::vec3 bitangent(0.0f, -1.0f, 0.0f);
+		unsigned int baseIndex = m_vertices.size();
+		m_vertices.push_back(Vertex(glm::vec3(half, -half, -half), normal, glm::vec2(0.0f, 0.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(-half, -half, -half), normal, glm::vec2(1.0f, 0.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(-half, half, -half), normal, glm::vec2(1.0f, 1.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(half, half, -half), normal, glm::vec2(0.0f, 1.0f), tangent, bitangent));
+
+		m_indices.push_back(baseIndex + 0);
+		m_indices.push_back(baseIndex + 1);
+		m_indices.push_back(baseIndex + 2);
+		m_indices.push_back(baseIndex + 2);
+		m_indices.push_back(baseIndex + 3);
+		m_indices.push_back(baseIndex + 0);
+	}
+
+	// Left face (x = -half)
+	{
+		glm::vec3 normal(-1.0f, 0.0f, 0.0f);
+
+		glm::vec3 tangent(0.0f, 0.0f, 1.0f);
+		glm::vec3 bitangent(0.0f, -1.0f, 0.0f);
+		unsigned int baseIndex = m_vertices.size();
+		m_vertices.push_back(Vertex(glm::vec3(-half, -half, -half), normal, glm::vec2(0.0f, 0.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(-half, -half, half), normal, glm::vec2(1.0f, 0.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(-half, half, half), normal, glm::vec2(1.0f, 1.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(-half, half, -half), normal, glm::vec2(0.0f, 1.0f), tangent, bitangent));
+
+		m_indices.push_back(baseIndex + 0);
+		m_indices.push_back(baseIndex + 1);
+		m_indices.push_back(baseIndex + 2);
+		m_indices.push_back(baseIndex + 2);
+		m_indices.push_back(baseIndex + 3);
+		m_indices.push_back(baseIndex + 0);
+	}
+
+	// Right face (x = +half)
+	{
+		glm::vec3 normal(1.0f, 0.0f, 0.0f);
+		glm::vec3 tangent(0.0f, 0.0f, -1.0f);
+		glm::vec3 bitangent(0.0f, -1.0f, 0.0f);
+		unsigned int baseIndex = m_vertices.size();
+		m_vertices.push_back(Vertex(glm::vec3(half, -half, half), normal, glm::vec2(0.0f, 0.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(half, -half, -half), normal, glm::vec2(1.0f, 0.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(half, half, -half), normal, glm::vec2(1.0f, 1.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(half, half, half), normal, glm::vec2(0.0f, 1.0f), tangent, bitangent));
+
+		m_indices.push_back(baseIndex + 0);
+		m_indices.push_back(baseIndex + 1);
+		m_indices.push_back(baseIndex + 2);
+		m_indices.push_back(baseIndex + 2);
+		m_indices.push_back(baseIndex + 3);
+		m_indices.push_back(baseIndex + 0);
+	}
+
+	// Top face (y = +half)
+	{
+		glm::vec3 normal(0.0f, 1.0f, 0.0f);
+
+		glm::vec3 tangent(1.0f, 0.0f, 0.0f);
+		glm::vec3 bitangent(0.0f, 0.0f, -1.0f);
+		unsigned int baseIndex = m_vertices.size();
+		m_vertices.push_back(Vertex(glm::vec3(-half, half, half), normal, glm::vec2(0.0f, 0.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(half, half, half), normal, glm::vec2(1.0f, 0.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(half, half, -half), normal, glm::vec2(1.0f, 1.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(-half, half, -half), normal, glm::vec2(0.0f, 1.0f), tangent, bitangent));
+
+		m_indices.push_back(baseIndex + 0);
+		m_indices.push_back(baseIndex + 1);
+		m_indices.push_back(baseIndex + 2);
+		m_indices.push_back(baseIndex + 2);
+		m_indices.push_back(baseIndex + 3);
+		m_indices.push_back(baseIndex + 0);
+	}
+
+	// Bottom face (y = -half)
+	{
+		glm::vec3 normal(0.0f, -1.0f, 0.0f);
+
+		glm::vec3 tangent(1.0f, 0.0f, 0.0f);
+		glm::vec3 bitangent(0.0f, 0.0f, 1.0f);
+		unsigned int baseIndex = m_vertices.size();
+		m_vertices.push_back(Vertex(glm::vec3(-half, -half, -half), normal, glm::vec2(0.0f, 0.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(half, -half, -half), normal, glm::vec2(1.0f, 0.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(half, -half, half), normal, glm::vec2(1.0f, 1.0f), tangent, bitangent));
+		m_vertices.push_back(Vertex(glm::vec3(-half, -half, half), normal, glm::vec2(0.0f, 1.0f), tangent, bitangent));
+
+		m_indices.push_back(baseIndex + 0);
+		m_indices.push_back(baseIndex + 1);
+		m_indices.push_back(baseIndex + 2);
+		m_indices.push_back(baseIndex + 2);
+		m_indices.push_back(baseIndex + 3);
+		m_indices.push_back(baseIndex + 0);
+	}
+
+	setupMesh();
+}
+
+
 
 void Mesh::loadModel(const std::string& path)
 {

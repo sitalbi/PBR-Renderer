@@ -8,6 +8,7 @@
 enum class MeshType
 {
 	Sphere,
+	Cube,
 	Suzanne,
 	Kabuto
 };
@@ -23,6 +24,7 @@ public:
 	void loadModel(const std::string& path);
 	void draw();
 	void loadSphere(float radius, unsigned int segments);
+	void loadCube(float size);
 
 private:
 	void processNode(aiNode* node, const aiScene* scene);
