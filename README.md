@@ -16,6 +16,7 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 - HDRI skyboxes for environment lighting
 - Model loading with Assimp
 - SSAO (Screen Space Ambient Occlusion)
+- HDR Bloom
 - Camera: free movement camera and orbit camera
 
 ## Dependencies:
