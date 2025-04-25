@@ -7,6 +7,8 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 
 ## Images
 ![renderer_image](https://simono.fr/renderer.png)
+![renderer_image bloom](https://simono.fr/renderer2.png)
+![renderer_image model](https://simono.fr/renderer3.png)
 
 ## Features:
 - Cook-Torrance BRDF model
