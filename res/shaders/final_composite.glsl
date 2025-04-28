@@ -18,17 +18,17 @@ void main()
     
     // Blend scene over background
     vec3 combinedColor = mix(backgroundColor.rgb, sceneColor.rgb, sceneColor.a);
+
+    // Apply bloom if enabled
+    if (useBloom) {
+        combinedColor += bloomColor;
+    }
     
     // Apply HDR tone mapping to combined scene and bloom
     vec3 hdrCombined = combinedColor;
     vec3 toneMappedScene = vec3(1.0) - exp(-hdrCombined * exposure);
-    vec3 toneMappedBloom = vec3(1.0) - exp(-bloomColor * exposure);
     
     vec3 result = toneMappedScene;
-    if (useBloom) {
-        // Add bloom to the scene
-        result += toneMappedBloom;
-    }
     
     // Gamma correction
     result = pow(result, vec3(1.0 / 2.2));

@@ -70,7 +70,7 @@ void Application::init()
 	basicMat->metallic = 0.5f;
 	basicMat->roughness = 0.5f;
 	basicMat->ao = 0.25f;
-	basicMat->emissiveColor = glm::vec3(3.0f, 3.0f, 3.0f);
+	basicMat->emissiveColor = glm::vec3(0.0f, 0.0f, 0.0f);
 
 	// Create textured materials
 	std::shared_ptr<Material> lightgoldMat = std::make_shared<Material>();
@@ -138,6 +138,7 @@ void Application::init()
 
 	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::Kabuto], m_kabutoMaterial, glm::vec3(5.0f, 0.0f, 0.0f), "Kabuto"));
 	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::Sphere], *basicMat, glm::vec3(0.0f, 0.0f, 0.0f), "Sphere"));
+	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::Cube], *basicMat, glm::vec3(-5.0f, 0.0f, 0.0f), "Cube"));
 
 	m_renderer->setCurrentScene(std::move(scene));
 }
