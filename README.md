@@ -33,6 +33,7 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 - Deferred rendering
 - Scene save/load 
 - multiple lights and types
+- bloom anti-aliasing
 
 ## Credits:
 
