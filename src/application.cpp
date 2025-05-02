@@ -37,7 +37,7 @@ void Application::run()
 
 void Application::init()
 {
-	m_renderer->setLightDir(glm::vec3(0.0f, 1.0f, -1.0f));
+	m_renderer->lightDir = glm::vec3(0.0f, 1.0f, -1.0f);
 	m_renderer->setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
 	m_renderer->setCamera(&m_camera);
 	m_renderer->init();
@@ -139,6 +139,9 @@ void Application::init()
 	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::Kabuto], m_kabutoMaterial, glm::vec3(5.0f, 0.0f, 0.0f), "Kabuto"));
 	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::Sphere], *basicMat, glm::vec3(0.0f, 0.0f, 0.0f), "Sphere"));
 	scene->addEntity(std::make_shared<Entity>(m_meshes[MeshType::Cube], *basicMat, glm::vec3(-5.0f, 0.0f, 0.0f), "Cube"));
+	std::shared_ptr<Entity> plane = std::make_shared<Entity>(m_meshes[MeshType::Cube], *basicMat, glm::vec3(0.0f, -2.0f, 0.0f), "Plane");
+	plane->scale = glm::vec3(20.0f, 0.1f, 20.0f);
+	scene->addEntity(plane);
 
 	m_renderer->setCurrentScene(std::move(scene));
 }
@@ -194,6 +197,10 @@ void Application::updateUI()
 	ImGui::Checkbox("Bloom", &m_renderer->useBloom);
 	ImGui::SetNextItemWidth(100.0f);
 	ImGui::SliderFloat("Exposure", &m_renderer->exposure, 0.01f, 1.0f);
+	ImGui::Text("Light Direction");
+	if (ImGui::InputFloat3("Light Direction", glm::value_ptr(m_renderer->lightDir))) {
+		m_renderer->updateLighting();
+	}
 	ImGui::End();
 
 	ImGui::Begin("Scene Editor");

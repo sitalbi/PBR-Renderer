@@ -21,6 +21,15 @@ public:
 
 	void draw(const glm::mat4& view, const glm::mat4& projection);
 
+	void drawMesh() {
+		if (m_mesh) {
+
+			m_mesh->draw();
+		}
+	}
+
+	glm::mat4 getModelMatrix();
+
 	void setMesh(std::shared_ptr<Mesh> mesh) { m_mesh = mesh; }
 
 	void setMaterial(Material material) { m_material = material; }

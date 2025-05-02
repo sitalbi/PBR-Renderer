@@ -96,6 +96,14 @@ void Framebuffer::addDepthTexture()
 	unbind();
 }
 
+void Framebuffer::setDepthTexture(unsigned int textureID, int attachment)
+{
+	depthTexture = textureID;
+	bind();
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, textureID, 0);
+	unbind();
+}
+
 void Framebuffer::setDrawBuffers()
 {
 	for (unsigned int i = 0; i < textures.size(); ++i) {

@@ -20,12 +20,13 @@ public:
 	~Renderer();
 
 	void init();
+    void updateLighting();
 	void update();
 	void shutdown();
 
 	void setCamera(Camera* camera) { m_camera = camera; }
 	Camera* getCamera() { return m_camera; }
-	void setLightDir(const glm::vec3& lightDir) { m_lightDir = lightDir; }
+
 	void setLightColor(const glm::vec3& lightColor) { m_lightColor = lightColor; }
 
 	void setCurrentScene(std::unique_ptr<Scene> scene) { m_currentScene = std::move(scene); }
@@ -137,6 +138,8 @@ public:
 	bool useBloom = true;
 	float exposure = 0.5f;
 
+    glm::vec3 lightDir = glm::vec3(0.0f, 0.0f, 0.0f);
+
 private:
     static unsigned int cubeVAO;
     static unsigned int cubeVBO;
@@ -147,7 +150,6 @@ private:
 
 	Camera* m_camera;
 
-	glm::vec3 m_lightDir = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::vec3 m_lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
 	bool m_initialized = false;
@@ -155,6 +157,7 @@ private:
 	std::unique_ptr<Scene> m_currentScene;
 
 	std::shared_ptr<Shader> m_basicShader;
+	std::shared_ptr<Shader> m_depthShader;
 	std::shared_ptr<Shader> m_pbrShader;
 	std::unique_ptr<Shader> m_lightingShader;
 	std::unique_ptr<Shader> m_ssaoShader;
@@ -163,12 +166,13 @@ private:
 	std::unique_ptr<Shader> m_finalCompoShader;
 
     std::unique_ptr<Framebuffer> m_backgroundFB;
-	std::unique_ptr<Framebuffer> m_geometryFB;
+	std::unique_ptr<Framebuffer> m_depthFB; 
+    std::unique_ptr<Framebuffer> m_geometryFB;
 	std::unique_ptr<Framebuffer> m_ssaoFB;
 	std::unique_ptr<Framebuffer> m_ssaoBlurFB;
 	std::unique_ptr<Framebuffer> m_brightFB;
-	std::unique_ptr<Framebuffer> m_lightingFB;
-	std::unique_ptr<Framebuffer> m_postProcessFB;
+	std::unique_ptr<Framebuffer> m_hdrFB;
+	std::unique_ptr<Framebuffer> m_finalCompositeFB;
 
 	std::unique_ptr<BloomRenderer> m_bloomRenderer;
 

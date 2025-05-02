@@ -47,6 +47,9 @@ uniform samplerCube irradianceMap;
 uniform samplerCube prefilterMap;
 uniform sampler2D brdfLUT;
 
+uniform sampler2D shadowMap;
+uniform mat4     lightSpaceMatrix;
+
 const float PI = 3.14159265359;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness);
@@ -54,6 +57,25 @@ float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 vec3 fresnelSchlick(float cosTheta, vec3 F0);
 vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
+
+float ShadowCalculation(vec4 fragPosLightSpace)
+{
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+
+    if(projCoords.z > 1.0) return 0.0; // outside of light frustum
+
+    projCoords = projCoords * 0.5 + 0.5;
+
+    float closestDepth = texture(shadowMap, projCoords.xy).r; 
+
+    float currentDepth = projCoords.z;
+
+    float bias = max(0.025 * (1.0 - dot(Normal, lightDir)), 0.0005); 
+
+    float shadow = currentDepth -bias > closestDepth  ? 1.0 : 0.0;
+
+    return shadow;
+}  
 
 void main()
 {
@@ -87,64 +109,50 @@ void main()
 
     vec3 viewSpaceN = normalize(mat3(VM) * N); // transform normal to view space for output gNormal
 
+    vec3 V        = normalize(camPos - WorldPos);
+    vec3 L        = normalize(lightDir);
+    vec3 H        = normalize(V + L);
+    float NdotL   = max(dot(N, L), 0.0);
+    vec3 F0       = mix(vec3(0.04), albedo, metallic);
+
+    // Cook-Torrance terms
+    float  NDF  = DistributionGGX(N, H, roughness);
+    float  G    = GeometrySmith(N, V, L, roughness);
+    vec3   F    = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+    vec3   kS   = F;
+    vec3   kD   = (vec3(1.0) - kS) * (1.0 - metallic);
+    vec3   spec = (NDF * G * F) / (4.0 * max(dot(N,V),0) * NdotL + 0.001);
+    vec3   diff = kD * albedo / PI;
+
+    // Shadow factor for this fragment
+    float shadow = ShadowCalculation(lightSpaceMatrix * vec4(WorldPos,1.0));
+
+    // Direct lighting 
+    vec3 radiance = lightColor;
+    vec3 directLighting = (diff + spec)  * radiance  * NdotL  * (1.0 - shadow);
+
+    // IBL (ambient lighting)
+    // Diffuse IBL
+    vec3 irradiance    = texture(irradianceMap, N).rgb;
+    vec3 diffuseIBL    = irradiance * albedo;
+
+    // Specular IBL
+    vec3 R             = reflect(-V, N);
+    const float MAX_LOD = 4.0;
+    vec3 prefiltered   = textureLod(prefilterMap, R, roughness * MAX_LOD).rgb;
+    vec2 brdfLookup    = texture(brdfLUT, vec2(max(dot(N,V),0.0), roughness)).rg;
+    vec3 specularIBL   = prefiltered * (F * brdfLookup.x + brdfLookup.y);
+
+    // Pack into ambientLighting (modulated by AO)
+    vec3 ambientLighting = (kD * diffuseIBL + specularIBL) * ao;
+
+    // Emissive
     vec3 emissive = material.emissiveColor;
 
-	vec3 V = normalize(camPos - WorldPos);
-    
-    vec3 F0 = vec3(0.04);
-    F0 = mix(F0, albedo, metallic);
-    
-    // reflectance equation
-    vec3 Lo = vec3(0.0);
-    
-    // calculate per-light radiance
-    vec3 L = normalize(lightDir);
-    vec3 H = normalize(V + L);
-    //float distance = length(lightPos - WorldPos);     // point light
-    //float attenuation = 1.0 / (distance * distance);  // point light
-    float attenuation = 1.0;
-    vec3 radiance = lightColor * attenuation;
-    
-    // cook-torrance brdf
-    float NDF = DistributionGGX(N, H, roughness);
-    float G = GeometrySmith(N, V, L, roughness);
-    vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
-    
-    // reflectance
-    vec3 kS = F;
-    vec3 kD = vec3(1.0) - kS;
-    kD *= 1.0 - metallic;
-    
-    // specular
-    vec3 numerator    = NDF * G * F;
-    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;
-    vec3 specular     = numerator / denominator;  
-    
-    float NdotL = max(dot(N, L), 0.0);                
-    Lo = (kD * albedo / PI + specular) * radiance * NdotL; 
+    // Final
+    vec3 colorOut = directLighting + ambientLighting + emissive;
 
-    // diffuse IBL
-    vec3 irradiance = texture(irradianceMap, N).rgb;
-    vec3 diffuse    = irradiance * albedo;
-
-    // specular IBL
-    vec3 R = reflect(-V, N);
-    const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;   
-    vec2 envBRDF  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
-    vec3 specularIBL = prefilteredColor * (F*envBRDF.x + envBRDF.y);
-
-    vec3 ambient    = (kD*diffuse+specularIBL)*ao; 
-
-    vec3 color = ambient + Lo;
-    color += emissive; 
-    
-//    // tone mapping
-//    color = color / (color + vec3(1.0));
-//    // gamma correction
-//    color = pow(color, vec3(1.0/2.2));
-    
-    gColor = vec4(color, 1.0);
+    gColor = vec4(colorOut, 1.0);
     gNormal = vec4(normalize(viewSpaceN), 1.0); // normal in view space
     gPosition = vec4(ViewPos, 1.0); // position in view space
 }

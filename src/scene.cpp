@@ -6,7 +6,7 @@ Scene::Scene()
 {
 	m_skybox = std::make_unique<Skybox>();
 	// Load default skybox cubemap hdr texture
-	m_skybox->loadHDRImage(RES_DIR"/textures/skybox/kiara_1_dawn_4k.hdr");
+	m_skybox->loadHDRImage(RES_DIR"/textures/skybox/brown_photostudio_02_4k.hdr");
 }
 
 Scene::~Scene()

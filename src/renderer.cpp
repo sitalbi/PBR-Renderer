@@ -50,7 +50,7 @@ void Renderer::init()
 		return;
 	}
 
-	// Enable MSAA
+	// Enable anti-aliasing
 	glEnable(GL_MULTISAMPLE);
 
 	// OpenGL settings
@@ -67,12 +67,13 @@ void Renderer::init()
 	if (m_pbrShader)
 	{
 		m_pbrShader->bind();
-		m_pbrShader->setUniform3f("lightDir", m_lightDir.x, m_lightDir.y, m_lightDir.z);
+		m_pbrShader->setUniform3f("lightDir", lightDir.x, lightDir.y, lightDir.z);
 		m_pbrShader->setUniform3f("lightColor", m_lightColor.x, m_lightColor.y, m_lightColor.z);
 		glm::vec3 camPos = m_camera->getPosition();
 		m_pbrShader->setUniform3f("camPos", camPos.x, camPos.y, camPos.z);
 	}
 
+	m_depthShader = std::make_shared<Shader>(RES_DIR "/shaders/depth_vert.glsl", RES_DIR "/shaders/empty_frag.glsl");
 	m_lightingShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/quad_frag.glsl");
 	m_ssaoShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/ssao_frag.glsl");
 	m_ssaoBlurShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/ssao_blur_frag.glsl");
@@ -86,6 +87,32 @@ void Renderer::init()
 	m_backgroundFB->setDrawBuffers();
 	if (!m_backgroundFB->isComplete()) {
 		std::cerr << "Background framebuffer is incomplete" << std::endl;
+	}
+
+	// Initialize depth-only framebuffer for shadow mapping
+	m_depthFB = std::make_unique<Framebuffer>(window_width, window_height);
+	// Create a depth texture
+	GLuint shadowDepthTex;
+	glGenTextures(1, &shadowDepthTex);
+	glBindTexture(GL_TEXTURE_2D, shadowDepthTex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+		2048, 2048, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // TODO use variables for width and height
+	// configure sampling and wrapping
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	float borderColor[] = { 1,1,1,1 };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+	// Attach the depth texture to the framebuffer
+	m_depthFB->setDepthTexture(shadowDepthTex, GL_DEPTH_ATTACHMENT);
+	m_depthFB->bind();
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	m_depthFB->unbind();
+	if (!m_depthFB->isComplete()) {
+		std::cerr << "Depth framebuffer is incomplete" << std::endl;
 	}
 
 	// Initialize Geometry pass framebuffer
@@ -177,19 +204,19 @@ void Renderer::init()
 	}
 
 	// Composite framebuffer (before bloom)
-	m_lightingFB = std::make_unique<Framebuffer>(window_width, window_height);
-	m_lightingFB->createColorAttachment(); // color
-	m_lightingFB->setDrawBuffers();
-	if (!m_lightingFB->isComplete()) {
+	m_hdrFB = std::make_unique<Framebuffer>(window_width, window_height);
+	m_hdrFB->createColorAttachment(); // color
+	m_hdrFB->setDrawBuffers();
+	if (!m_hdrFB->isComplete()) {
 		std::cerr << "Final framebuffer is incomplete" << std::endl;
 	}
 
 	// Post process framebuffer
-	m_postProcessFB = std::make_unique<Framebuffer>(window_width, window_height);
-	m_postProcessFB->createColorAttachment(); // color
-	m_postProcessFB->addDepthRenderBuffer();
-	m_postProcessFB->setDrawBuffers();
-	if (!m_postProcessFB->isComplete()) {
+	m_finalCompositeFB = std::make_unique<Framebuffer>(window_width, window_height);
+	m_finalCompositeFB->createColorAttachment(); // color
+	m_finalCompositeFB->addDepthRenderBuffer();
+	m_finalCompositeFB->setDrawBuffers();
+	if (!m_finalCompositeFB->isComplete()) {
 		std::cerr << "Post process framebuffer is incomplete" << std::endl;
 	}
 
@@ -201,6 +228,16 @@ void Renderer::clear()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
+void Renderer::updateLighting()
+{
+	if (m_pbrShader)
+	{
+		m_pbrShader->bind();
+		m_pbrShader->setUniform3f("lightDir", lightDir.x, lightDir.y, lightDir.z);
+		m_pbrShader->unbind();
+	}
+}
+
 
 void Renderer::render()
 {
@@ -210,6 +247,26 @@ void Renderer::render()
 	m_backgroundFB->bind();
 	m_currentScene->drawSkybox(m_camera->getViewMatrix(), m_camera->getProjectionMatrix());
 	m_backgroundFB->unbind();
+
+	// Depth pass
+	m_depthFB->bind();
+	glViewport(0, 0, 2048, 2048); // TODO use variables for width and height
+	glClear(GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+	// light space matrix
+	glm::mat4 lightSpaceMatrix = glm::ortho(-35.0f, 35.0f, -35.0f, 35.0f, 0.1f, 75.0f);
+	glm::vec3 lightPos = lightDir*20.0f;
+	lightSpaceMatrix *= glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	m_depthShader->bind();
+	m_depthShader->setUniformMat4f("lightSpaceMatrix", lightSpaceMatrix);
+	for (auto& entity : m_currentScene->getEntities())
+	{
+		m_depthShader->setUniformMat4f("model", entity->getModelMatrix());
+		entity->drawMesh();
+	}
+	m_depthFB->unbind();
+	glViewport(0, 0, window_width, window_height); // reset viewport
 	
 	// Geometry pass
 	if (m_currentScene)
@@ -219,6 +276,10 @@ void Renderer::render()
 		glm::vec3 camPos = m_camera->getPosition();
 		m_pbrShader->bind();
 		m_pbrShader->setUniform3f("camPos", camPos.x, camPos.y, camPos.z); 
+		m_pbrShader->setUniformMat4f("lightSpaceMatrix", lightSpaceMatrix);
+		glActiveTexture(GL_TEXTURE19);
+		glBindTexture(GL_TEXTURE_2D, m_depthFB->depthTexture);
+		m_pbrShader->setUniform1i("shadowMap", 19);
 		m_currentScene->draw(m_camera->getViewMatrix(), m_camera->getProjectionMatrix());
 	}
 
@@ -251,7 +312,7 @@ void Renderer::render()
 	}
 
 	// Lighting pass (SSAO, tone mapping)
-	m_lightingFB->bind();
+	m_hdrFB->bind();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	m_lightingShader->bind();
 	glActiveTexture(GL_TEXTURE13);
@@ -268,7 +329,7 @@ void Renderer::render()
 	m_lightingShader->setUniform1i("ssaoTexture", 14);
 	renderQuad();
 	m_lightingShader->unbind();
-	m_lightingFB->unbind();
+	m_hdrFB->unbind();
 
 	if (useBloom)
 	{
@@ -277,7 +338,7 @@ void Renderer::render()
 		glClear(GL_COLOR_BUFFER_BIT);
 		m_brightShader->bind();
 		glActiveTexture(GL_TEXTURE15);
-		glBindTexture(GL_TEXTURE_2D, m_lightingFB->textures[0]); // color
+		glBindTexture(GL_TEXTURE_2D, m_hdrFB->textures[0]); // color
 		m_brightShader->setUniform1i("sceneColor", 15);
 		m_brightShader->setUniform1f("threshold", 1.0f);
 		m_brightShader->setUniform1f("softThreshold", 0.95f);
@@ -290,11 +351,11 @@ void Renderer::render()
 	
 
 	// Final composite pass
-	m_postProcessFB->bind();
+	m_finalCompositeFB->bind();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	m_finalCompoShader->bind();
 	glActiveTexture(GL_TEXTURE17);
-	glBindTexture(GL_TEXTURE_2D, m_lightingFB->textures[0]); // composite
+	glBindTexture(GL_TEXTURE_2D, m_hdrFB->textures[0]); // composite
 	m_finalCompoShader->setUniform1i("sceneTexture", 17);
 	glActiveTexture(GL_TEXTURE18);
 	glBindTexture(GL_TEXTURE_2D, m_backgroundFB->textures[0]); // background
@@ -317,7 +378,7 @@ void Renderer::render()
 	renderQuad();
 	m_finalCompoShader->unbind();
 	glDisable(GL_BLEND);
-	m_postProcessFB->unbind();
+	m_finalCompositeFB->unbind();
 }
 
 void Renderer::update()
@@ -368,7 +429,7 @@ void Renderer::renderUI()
 		uMax = 1.0f - uCrop;
 	}
 
-	ImGui::Image((ImTextureID)(intptr_t)m_postProcessFB->textures[0],
+	ImGui::Image((ImTextureID)(intptr_t)m_finalCompositeFB->textures[0],
 		viewportSize,
 		ImVec2(uMin, vMax), 
 		ImVec2(uMax, vMin));

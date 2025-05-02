@@ -36,6 +36,7 @@ public:
 
 	void addDepthRenderBuffer();
 	void addDepthTexture();
+	void setDepthTexture(unsigned int textureID, int attachement);
 
 	void setDrawBuffers();
 
