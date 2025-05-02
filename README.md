@@ -19,6 +19,7 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 - Model loading with Assimp
 - SSAO (Screen Space Ambient Occlusion)
 - HDR Bloom
+- Shadows using shadow mapping
 - Camera: free movement camera and orbit camera
 
 ## Dependencies:
@@ -28,12 +29,11 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 - [imgui](https://github.com/ocornut/imgui) GUI
 
 ## TODO:
-- add hot reload for shaders
-- Shadows
+- Hot reload for shaders
 - Deferred rendering
 - Scene save/load 
-- multiple lights and types
-- bloom anti-aliasing
+- multiple lights (point lights)
+- FXAA
 
 ## Credits:
 
