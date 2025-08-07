@@ -29,11 +29,12 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 - [imgui](https://github.com/ocornut/imgui) GUI
 
 ## TODO:
+- Refactor mesh class to handle assimp mesh structure with submeshes etc..
 - Hot reload for shaders
 - Deferred rendering
 - Scene save/load 
 - multiple lights (point lights)
-- FXAA
+- custom anti-aliasing
 
 ## Credits:
 
