@@ -14,7 +14,7 @@ public:
 	void init();
 	void shutdown();
 
-	std::shared_ptr<Mesh> getMesh(MeshType type) { return m_meshes[type]; }
+	std::shared_ptr<Model> getModel(ModelType type) { return m_models[type]; }
 
 private:
 	std::unique_ptr<Renderer> m_renderer;
@@ -29,7 +29,7 @@ private:
 
 	std::shared_ptr<Shader> m_basicShader;
 
-	std::unordered_map<MeshType, std::shared_ptr<Mesh>> m_meshes;
+	std::unordered_map<ModelType, std::shared_ptr<Model>> m_models;
 
 	std::unordered_map<std::string, std::shared_ptr<Material>> m_materials;
 

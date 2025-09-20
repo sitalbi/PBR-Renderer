@@ -4,8 +4,9 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <material.h>
 
-enum class MeshType
+enum class ModelType
 {
 	Sphere,
 	Cube,
@@ -26,6 +27,8 @@ public:
 	void loadSphere(float radius, unsigned int segments);
 	void loadCube(float size);
 
+	std::shared_ptr<Material> material;
+
 private:
 	void processNode(aiNode* node, const aiScene* scene);
 	void processMesh(aiMesh* mesh, const aiScene* scene);
@@ -33,8 +36,10 @@ private:
 	std::vector<Vertex> m_vertices;
 	std::vector<unsigned int> m_indices;
 
+
 	unsigned int m_vao, m_vbo, m_ibo;
 
 	bool isSetup = false;
+
 
 };

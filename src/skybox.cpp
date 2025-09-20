@@ -5,7 +5,6 @@
 #include "renderer.h"
 #include <stb_image.h>
 
-
 Skybox::Skybox()
 {
 	m_skyboxVertices = {

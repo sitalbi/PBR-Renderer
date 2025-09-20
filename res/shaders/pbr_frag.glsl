@@ -50,6 +50,9 @@ uniform sampler2D brdfLUT;
 uniform sampler2D shadowMap;
 uniform mat4     lightSpaceMatrix;
 
+uniform float ambientIntensity;
+uniform float lightIntensity;
+
 const float PI = 3.14159265359;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness);
@@ -72,9 +75,22 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 
     float bias = max(0.025 * (1.0 - dot(Normal, lightDir)), 0.0005); 
 
-    float shadow = currentDepth -bias > closestDepth  ? 1.0 : 0.0;
+    //float shadow = currentDepth -bias > closestDepth  ? 1.0 : 0.0;
 
-    return shadow;
+    // PCF 
+    float shadow = 0.0;
+    const float kernelSize = 4.0;
+    for(int x = -1; x <= 1; ++x) {
+        for(int y = -1; y <= 1; ++y) {
+            float pcfX = float(x) / kernelSize;
+            float pcfY = float(y) / kernelSize;
+            vec2 texCoords = projCoords.xy + vec2(pcfX, pcfY) * bias;
+            float sampleDepth = texture(shadowMap, texCoords).r;
+            shadow += currentDepth - bias > sampleDepth ? 1.0 : 0.0;
+        }
+    }
+    shadow /= 9.0; // average the samples
+    return shadow; 
 }  
 
 void main()
@@ -150,7 +166,7 @@ void main()
     vec3 emissive = material.emissiveColor;
 
     // Final
-    vec3 colorOut = directLighting + ambientLighting + emissive;
+    vec3 colorOut = directLighting * lightIntensity + ambientLighting * ambientIntensity + emissive;
 
     gColor = vec4(colorOut, 1.0);
     gNormal = vec4(normalize(viewSpaceN), 1.0); // normal in view space

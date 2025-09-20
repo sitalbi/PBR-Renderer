@@ -96,7 +96,7 @@ void Renderer::init()
 	glGenTextures(1, &shadowDepthTex);
 	glBindTexture(GL_TEXTURE_2D, shadowDepthTex);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-		2048, 2048, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // TODO use variables for width and height
+		4096, 4096, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr); // TODO use variables for width and height
 	// configure sampling and wrapping
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -220,6 +220,8 @@ void Renderer::init()
 		std::cerr << "Post process framebuffer is incomplete" << std::endl;
 	}
 
+	updateLighting();
+
 	m_initialized = true;
 }
 
@@ -234,6 +236,8 @@ void Renderer::updateLighting()
 	{
 		m_pbrShader->bind();
 		m_pbrShader->setUniform3f("lightDir", lightDir.x, lightDir.y, lightDir.z);
+		m_pbrShader->setUniform1f("ambientIntensity", ambientIntensity);
+		m_pbrShader->setUniform1f("lightIntensity", lightIntensity);
 		m_pbrShader->unbind();
 	}
 }
@@ -250,20 +254,20 @@ void Renderer::render()
 
 	// Depth pass
 	m_depthFB->bind();
-	glViewport(0, 0, 2048, 2048); // TODO use variables for width and height
+	glViewport(0, 0, 4096, 4096); // TODO use variables for width and height
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
 	// light space matrix
 	glm::mat4 lightSpaceMatrix = glm::ortho(-35.0f, 35.0f, -35.0f, 35.0f, 0.1f, 75.0f);
-	glm::vec3 lightPos = lightDir*20.0f;
+	glm::vec3 lightPos = lightDir*10.0f;
 	lightSpaceMatrix *= glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	m_depthShader->bind();
 	m_depthShader->setUniformMat4f("lightSpaceMatrix", lightSpaceMatrix);
 	for (auto& entity : m_currentScene->getEntities())
 	{
 		m_depthShader->setUniformMat4f("model", entity->getModelMatrix());
-		entity->drawMesh();
+		entity->drawModel();
 	}
 	m_depthFB->unbind();
 	glViewport(0, 0, window_width, window_height); // reset viewport
@@ -280,7 +284,7 @@ void Renderer::render()
 		glActiveTexture(GL_TEXTURE19);
 		glBindTexture(GL_TEXTURE_2D, m_depthFB->depthTexture);
 		m_pbrShader->setUniform1i("shadowMap", 19);
-		m_currentScene->draw(m_camera->getViewMatrix(), m_camera->getProjectionMatrix());
+		m_currentScene->draw(m_pbrShader, m_camera->getViewMatrix(), m_camera->getProjectionMatrix());
 	}
 
 	// SSAO

@@ -134,9 +134,11 @@ public:
         glBindVertexArray(0);
     }
 
-	bool useSSAO = false;
+	bool useSSAO = true;
 	bool useBloom = true;
 	float exposure = 0.5f;
+	float ambientIntensity = 1.0f;
+	float lightIntensity = 1.0f;
 
     glm::vec3 lightDir = glm::vec3(0.0f, 0.0f, 0.0f);
 

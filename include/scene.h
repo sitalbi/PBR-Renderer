@@ -16,7 +16,7 @@ public:
 	glm::vec3& getNewEntityPosition() { return m_newEntityPosition; }
 	bool& getIsAddingEntity() { return m_isAddingEntity; }
 
-	void draw(const glm::mat4& view, const glm::mat4& projection);
+	void draw(std::shared_ptr<Shader> shader, const glm::mat4& view, const glm::mat4& projection);
 
 	void drawSkybox(const glm::mat4& view, const glm::mat4& projection);
 
