@@ -12,6 +12,7 @@ Model::~Model()
 
 void Model::loadModel(const std::string& path)
 {
+	//TODO: implement model loading using assimp
 }
 
 void Model::loadSphere(float radius, unsigned int segments)

@@ -222,19 +222,19 @@ void Application::updateUI()
 								ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
 							}
 							else {
-								ImGui::Text("Albedo Map");
+								ImGui::Text("Non editable Albedo Map");
 							}
 							if (!material.useMetalMap) {
 								ImGui::SliderFloat("Metallic", &material.metallic, 0.0f, 1.0f);
 							}
 							else {
-								ImGui::Text("Metallic Map");
+								ImGui::Text("Non editable Metallic Map");
 							}
 							if (!material.useRoughMap) {
 								ImGui::SliderFloat("Roughness", &material.roughness, 0.0f, 1.0f);
 							}
 							else {
-								ImGui::Text("Roughness Map");
+								ImGui::Text("Non editable Roughness Map");
 							}
 							ImGui::ColorEdit3("Emissive Color", glm::value_ptr(material.emissiveColor), ImGuiColorEditFlags_HDR);
 							ImGui::TreePop();

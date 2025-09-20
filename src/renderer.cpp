@@ -315,7 +315,7 @@ void Renderer::render()
 		renderQuad();
 	}
 
-	// Lighting pass (SSAO, tone mapping)
+	// Lighting pass
 	m_hdrFB->bind();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	m_lightingShader->bind();

@@ -17,7 +17,9 @@ public:
 	void drawModel() {
 		if (m_model) {
 
-			m_model->draw();
+			for (auto& mesh : m_model->getSubmeshes()) {
+				mesh.draw();
+			}
 		}
 	}
 

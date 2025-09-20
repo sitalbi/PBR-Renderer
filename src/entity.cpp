@@ -24,15 +24,6 @@ void Entity::draw(std::shared_ptr<Shader> shader, const glm::mat4& view, const g
 
 	auto& submeshes = m_model->getSubmeshes();
 	for (size_t i = 0; i < submeshes.size(); ++i) {
-		std::cout << materialOverrides.size() << std::endl;
-		// Check if there's an override for this submesh
-		if (materialOverrides.find(i) != materialOverrides.end())
-		{
-			std::cout << "Using override for submesh " << i << std::endl;
-		}
-		else {
-			std::cout << "Using default material for submesh " << i << std::endl;
-		}
 		Material* mat = materialOverrides.find(i) != materialOverrides.end() 
 			? &materialOverrides[i]
 			: submeshes[i].material.get();

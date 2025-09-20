@@ -116,13 +116,6 @@ struct Material {
 			shader->setUniform1i("material.aoMap", Material::AO_TEXTURE_UNIT);
 		}
 	
-		// Emissive (Not implemented yet)
-		/*shader->setUniformBool("useEmissiveMap", useEmissiveMap);
-		if (useEmissiveMap && emissiveMap) {
-			emissiveMap->bind(Material::EMISSIVE_TEXTURE_UNIT);
-			shader->setUniform1i("emissiveMap", Material::EMISSIVE_TEXTURE_UNIT);
-		}*/
-	
 		shader->setUniformBool("material.useAlbedoTexture", useAlbedoMap);
 		shader->setUniformBool("material.useNormalTexture", useNormalMap);
 		shader->setUniformBool("material.useMetallicTexture", useMetalMap);
