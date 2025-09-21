@@ -1,6 +1,6 @@
 # Physically Based Renderer
 
-This is a simple 3D physically based renderer written in C++ and OpenGL.
+This is a simple 3D Real Time physically based renderer written in C++ and OpenGL.
 It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org/wiki/Specular_highlight#Cook%E2%80%93Torrance_model) to simulate the reflection of light on a surface.
 
 ***Note***: *this project is mainly a learning exercise and is not intended for production use. The goal was for me to have a project where I could try to design a renderer and its base architecture as well as implement various PBR techniques using OpenGL. It is not fully optimized for performance and can contain bugs.*
