@@ -116,13 +116,13 @@ void Application::init()
 	m_models[ModelType::Suzanne] = m_suzanneMesh;*/
 
 	/*std::shared_ptr<Model> m_kabutoModel = std::make_shared<Model>();
-	m_kabutoModel->loadModel(RES_DIR"/models/pbr_kabuto_samurai_helmet/scene.gltf");*/
+	m_kabutoModel->loadModel(RES_DIR"/models/pbr_kabuto_samurai_helmet/kabuto.gltf");*/
 
-	/*std::shared_ptr<Model> helmetModel = std::make_shared<Model>();
-	helmetModel->loadModel(RES_DIR"/models/DamagedHelmet/DamagedHelmet.gltf");*/
+	std::shared_ptr<Model> helmetModel = std::make_shared<Model>();
+	helmetModel->loadModel(RES_DIR"/models/DamagedHelmet/DamagedHelmet.gltf");
 
-	std::shared_ptr<Model> sponzaModel = std::make_shared<Model>();
-	sponzaModel->loadModel(RES_DIR"/models/sponza/sponza.obj");
+	/*std::shared_ptr<Model> sponzaModel = std::make_shared<Model>();
+	sponzaModel->loadModel(RES_DIR"/models/sponza/sponza.obj");*/
 
 	std::unique_ptr<Scene> scene = std::make_unique<Scene>();
 
@@ -141,8 +141,8 @@ void Application::init()
 	scene->addEntity(cube);
 	scene->addEntity(plane);*/
 
-	std::shared_ptr<Entity> sponza = std::make_shared<Entity>(sponzaModel, glm::vec3(0.0f, 0.0f, 0.0f), "Sponza");
-	sponza->scale = glm::vec3(0.05f);
+	std::shared_ptr<Entity> sponza = std::make_shared<Entity>(helmetModel, glm::vec3(0.0f, 0.0f, 0.0f), "Kabuto");
+	//sponza->scale = glm::vec3(0.05f);
 	scene->addEntity(sponza);
 
 	m_renderer->setCurrentScene(std::move(scene));

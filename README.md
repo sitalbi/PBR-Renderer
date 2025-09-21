@@ -6,9 +6,13 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 ***Note***: *this project is mainly a learning exercise and is not intended for production use. The goal was for me to have a project where I could try to design a renderer and its base architecture as well as implement various PBR techniques using OpenGL. It is not fully optimized for performance and can contain bugs.*
 
 ## Images
-![renderer_image](https://simono.fr/renderer.png)
-![renderer_image bloom](https://simono.fr/renderer2.png)
-![renderer_image model](https://simono.fr/renderer3.png)
+
+<p align="center">
+  <img src="https://github.com/sitalbi/PBR-Renderer/blob/main/res/screenshots/screen1.png" width="650">
+  <img src="https://github.com/sitalbi/PBR-Renderer/blob/main/res/screenshots/screen2.png" width="650">
+  <img src="https://github.com/sitalbi/PBR-Renderer/blob/main/res/screenshots/screen3.png" width="650">
+  <img src="https://github.com/sitalbi/PBR-Renderer/blob/main/res/screenshots/screen4.png" width="650">
+</p>
 
 ## Features:
 - Cook-Torrance BRDF model
