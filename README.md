@@ -34,7 +34,6 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 - [assimp](https://github.com/assimp/assimp) Model loading library
 
 ## TODO:
-- Refactor mesh class to handle assimp mesh structure with submeshes etc..
 - Hot reload for shaders
 - Deferred rendering
 - Scene save/load 
