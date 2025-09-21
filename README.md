@@ -27,7 +27,7 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 - [GLAD](https://glad.dav1d.de/) OpenGL function loading
 - [glm](https://github.com/g-truc/glm) OpenGL mathematics library
 - [imgui](https://github.com/ocornut/imgui) GUI
-- [assimp](https://github.com/assimp/assimp)) Model loading library
+- [assimp](https://github.com/assimp/assimp) Model loading library
 
 ## TODO:
 - Refactor mesh class to handle assimp mesh structure with submeshes etc..
