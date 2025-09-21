@@ -1,5 +1,4 @@
 #include "framebuffer.h"
-#include "glad/glad.h"
 
 Framebuffer::Framebuffer(int width, int height) : width(width), height(height)
 {
@@ -114,3 +113,30 @@ void Framebuffer::setDrawBuffers()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void Framebuffer::createMultisampleColorAttachment(unsigned int samples, GLenum internalFormat)
+{
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture);
+
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, internalFormat, width, height, GL_TRUE);
+
+	textures.push_back(texture);
+
+	bind();
+	glFramebufferTexture2D(GL_FRAMEBUFFER,
+		GL_COLOR_ATTACHMENT0 + textures.size() - 1,
+		GL_TEXTURE_2D_MULTISAMPLE, texture, 0);
+	unbind();
+}
+
+void Framebuffer::addMultisampleDepthRenderBuffer(unsigned int samples)
+{
+	bind();
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH24_STENCIL8, width, height);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+	unbind();
+}

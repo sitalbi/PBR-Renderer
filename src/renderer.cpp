@@ -51,7 +51,7 @@ void Renderer::init()
 	}
 
 	// Enable anti-aliasing
-	glEnable(GL_MULTISAMPLE);
+	//glEnable(GL_MULTISAMPLE);
 
 	// OpenGL settings
 	glEnable(GL_DEPTH_TEST);
@@ -115,7 +115,7 @@ void Renderer::init()
 		std::cerr << "Depth framebuffer is incomplete" << std::endl;
 	}
 
-	// Initialize Geometry pass framebuffer
+	// Initialize Geometry pass framebuffers
 	m_geometryFB = std::make_unique<Framebuffer>(window_width, window_height);
 	m_geometryFB->createColorAttachment(); // color
 	m_geometryFB->createColorAttachment(); // normal
@@ -125,6 +125,18 @@ void Renderer::init()
 	if (!m_geometryFB->isComplete()) {
 		std::cerr << "Geometry framebuffer is incomplete" << std::endl;
 	}
+
+	unsigned int SAMPLES = 8;
+	m_geometryFB_MSAA = std::make_unique<Framebuffer>(window_width, window_height);
+	m_geometryFB_MSAA->createMultisampleColorAttachment(SAMPLES); // color
+	m_geometryFB_MSAA->createMultisampleColorAttachment(SAMPLES); // normal
+	m_geometryFB_MSAA->createMultisampleColorAttachment(SAMPLES); // position
+	m_geometryFB_MSAA->addMultisampleDepthRenderBuffer(SAMPLES);
+	m_geometryFB_MSAA->setDrawBuffers();
+	if (!m_geometryFB_MSAA->isComplete()) {
+		std::cerr << "Geometry MSAA framebuffer is incomplete" << std::endl;
+	}
+	
 
 	// Initialize SSAO framebuffers
 	m_ssaoFB = std::make_unique<Framebuffer>(window_width, window_height);
@@ -260,7 +272,7 @@ void Renderer::render()
 	glCullFace(GL_FRONT);
 	// light space matrix
 	glm::mat4 lightSpaceMatrix = glm::ortho(-35.0f, 35.0f, -35.0f, 35.0f, 0.1f, 75.0f);
-	glm::vec3 lightPos = lightDir*10.0f;
+	glm::vec3 lightPos = lightDir * 10.0f;
 	lightSpaceMatrix *= glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	m_depthShader->bind();
 	m_depthShader->setUniformMat4f("lightSpaceMatrix", lightSpaceMatrix);
@@ -271,20 +283,55 @@ void Renderer::render()
 	}
 	m_depthFB->unbind();
 	glViewport(0, 0, window_width, window_height); // reset viewport
-	
+
 	// Geometry pass
 	if (m_currentScene)
 	{
-		m_geometryFB->bind();
+		if (useAA) {
+			m_geometryFB_MSAA->bind();
+		}
+		else {
+			m_geometryFB->bind();
+		}
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glm::vec3 camPos = m_camera->getPosition();
 		m_pbrShader->bind();
-		m_pbrShader->setUniform3f("camPos", camPos.x, camPos.y, camPos.z); 
+		m_pbrShader->setUniform3f("camPos", camPos.x, camPos.y, camPos.z);
 		m_pbrShader->setUniformMat4f("lightSpaceMatrix", lightSpaceMatrix);
 		glActiveTexture(GL_TEXTURE19);
 		glBindTexture(GL_TEXTURE_2D, m_depthFB->depthTexture);
 		m_pbrShader->setUniform1i("shadowMap", 19);
 		m_currentScene->draw(m_pbrShader, m_camera->getViewMatrix(), m_camera->getProjectionMatrix());
+
+		if (useAA) {
+			// Resolve MSAA FBO to single sample FBO
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_geometryFB_MSAA->fbo);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_geometryFB->fbo);   
+
+			// Blit each color attachment
+			for (unsigned int i = 0; i < m_geometryFB->textures.size(); ++i)
+			{
+				glReadBuffer(GL_COLOR_ATTACHMENT0 + i);
+				glDrawBuffer(GL_COLOR_ATTACHMENT0 + i);
+
+				glBlitFramebuffer(0, 0, window_width, window_height,
+					0, 0, window_width, window_height,
+					GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			}
+
+			// Restore draw buffers for single-sample FBO (needed when switching back to it)
+			{
+				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_geometryFB->fbo);
+
+				std::vector<GLenum> bufs(m_geometryFB->textures.size());
+				for (size_t i = 0; i < bufs.size(); ++i) {
+					bufs[i] = GL_COLOR_ATTACHMENT0 + (GLenum)i;
+				}
+				glDrawBuffers((GLsizei)bufs.size(), bufs.data());
+
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			}
+		}
 	}
 
 	// SSAO
@@ -352,7 +399,7 @@ void Renderer::render()
 		// Bloom pass
 		m_bloomRenderer->renderBloomTexture(m_brightFB->textures[0], 0.0015f);
 	}
-	
+
 
 	// Final composite pass
 	m_finalCompositeFB->bind();
@@ -364,7 +411,7 @@ void Renderer::render()
 	glActiveTexture(GL_TEXTURE18);
 	glBindTexture(GL_TEXTURE_2D, m_backgroundFB->textures[0]); // background
 	m_finalCompoShader->setUniform1i("backgroundTexture", 18);
-	m_finalCompoShader->setUniform1f("exposure",exposure);
+	m_finalCompoShader->setUniform1f("exposure", exposure);
 
 	if (useBloom)
 	{
@@ -412,7 +459,7 @@ void Renderer::renderUI()
 	ImVec2 viewportSize = ImGui::GetContentRegionAvail();
 
 	// Crop the viewport to a 16:9 aspect ratio
-	float aspectRatio = (float) window_width / (float)window_height;
+	float aspectRatio = (float)window_width / (float)window_height;
 	float viewportAspectRatio = viewportSize.x / viewportSize.y;
 
 	float uMin = 0.0f;
@@ -435,7 +482,7 @@ void Renderer::renderUI()
 
 	ImGui::Image((ImTextureID)(intptr_t)m_finalCompositeFB->textures[0],
 		viewportSize,
-		ImVec2(uMin, vMax), 
+		ImVec2(uMin, vMax),
 		ImVec2(uMax, vMin));
 	ImGui::End();
 

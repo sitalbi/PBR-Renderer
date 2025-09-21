@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "glad/glad.h"
 
 class Framebuffer
 {
@@ -39,6 +40,10 @@ public:
 	void setDepthTexture(unsigned int textureID, int attachement);
 
 	void setDrawBuffers();
+
+	void createMultisampleColorAttachment(unsigned int samples, GLenum internalFormat = GL_RGBA16F);
+	void addMultisampleDepthRenderBuffer(unsigned int samples);
+
 
 
 private:

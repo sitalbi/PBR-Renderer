@@ -136,6 +136,7 @@ public:
 
 	bool useSSAO = true;
 	bool useBloom = true;
+	bool useAA = false;
 	float exposure = 0.5f;
 	float ambientIntensity = 1.0f;
 	float lightIntensity = 1.0f;
@@ -169,6 +170,7 @@ private:
 
     std::unique_ptr<Framebuffer> m_backgroundFB;
 	std::unique_ptr<Framebuffer> m_depthFB; 
+    std::unique_ptr<Framebuffer> m_geometryFB_MSAA;
     std::unique_ptr<Framebuffer> m_geometryFB;
 	std::unique_ptr<Framebuffer> m_ssaoFB;
 	std::unique_ptr<Framebuffer> m_ssaoBlurFB;

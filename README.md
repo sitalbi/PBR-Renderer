@@ -34,7 +34,6 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 - Deferred rendering
 - Scene save/load 
 - multiple lights (point lights)
-- custom anti-aliasing
 
 ## Credits:
 

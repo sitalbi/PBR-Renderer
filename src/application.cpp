@@ -188,6 +188,7 @@ void Application::updateUI()
 	ImGui::Begin("Post-Processing");
 	ImGui::Checkbox("SSAO", &m_renderer->useSSAO);
 	ImGui::Checkbox("Bloom", &m_renderer->useBloom);
+	ImGui::Checkbox("Anti-Aliasing", &m_renderer->useAA);
 	ImGui::SetNextItemWidth(100.0f);
 	ImGui::SliderFloat("Exposure", &m_renderer->exposure, 0.01f, 1.0f);
 	ImGui::Text("Light Direction");
