@@ -24,6 +24,7 @@ struct Material {
     bool useRoughnessTexture;
     bool useAoTexture;
     bool useNormalTexture;
+    bool useEmissiveTexture;
 
     vec3 albedo;
     float metallic;
@@ -36,6 +37,7 @@ struct Material {
     sampler2D metallicMap;
     sampler2D roughnessMap;
     sampler2D aoMap;
+    sampler2D emissiveMap;
 };
 
 uniform Material material;
@@ -115,6 +117,12 @@ void main()
     if(material.useAoTexture) {
         ao = texture(material.aoMap, TexCoords).r;
     }
+
+    // Emissive
+    vec3 emissive = material.emissiveColor;
+    if(material.useEmissiveTexture) {
+        emissive = texture(material.emissiveMap, TexCoords).rgb;
+    }
     
     vec3 N = normalize(Normal);
     if (material.useNormalTexture) {
@@ -162,8 +170,6 @@ void main()
     // Pack into ambientLighting (modulated by AO)
     vec3 ambientLighting = (kD * diffuseIBL + specularIBL) * ao;
 
-    // Emissive
-    vec3 emissive = material.emissiveColor;
 
     // Final
     vec3 colorOut = directLighting * lightIntensity + ambientLighting * ambientIntensity + emissive;

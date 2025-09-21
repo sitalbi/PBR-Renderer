@@ -89,6 +89,7 @@ void Renderer::init()
 		std::cerr << "Background framebuffer is incomplete" << std::endl;
 	}
 
+	// TODO: fix shadow mapping to work with sponza (large sizes)
 	// Initialize depth-only framebuffer for shadow mapping
 	m_depthFB = std::make_unique<Framebuffer>(window_width, window_height);
 	// Create a depth texture
@@ -301,6 +302,7 @@ void Renderer::render()
 		glActiveTexture(GL_TEXTURE19);
 		glBindTexture(GL_TEXTURE_2D, m_depthFB->depthTexture);
 		m_pbrShader->setUniform1i("shadowMap", 19);
+
 		m_currentScene->draw(m_pbrShader, m_camera->getViewMatrix(), m_camera->getProjectionMatrix());
 
 		if (useAA) {

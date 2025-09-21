@@ -115,11 +115,23 @@ struct Material {
 			glBindTexture(GL_TEXTURE_2D, 0);
 			shader->setUniform1i("material.aoMap", Material::AO_TEXTURE_UNIT);
 		}
+
+		// Emissive
+		if (emissiveMap) {
+			emissiveMap->bind(Material::EMISSIVE_TEXTURE_UNIT);
+			shader->setUniform1i("material.emissiveMap", Material::EMISSIVE_TEXTURE_UNIT);
+		}
+		else {
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			shader->setUniform1i("material.emissiveMap", Material::EMISSIVE_TEXTURE_UNIT);
+		}
 	
 		shader->setUniformBool("material.useAlbedoTexture", useAlbedoMap);
 		shader->setUniformBool("material.useNormalTexture", useNormalMap);
 		shader->setUniformBool("material.useMetallicTexture", useMetalMap);
 		shader->setUniformBool("material.useRoughnessTexture", useRoughMap);
 		shader->setUniformBool("material.useAoTexture", useAoMap);
+		shader->setUniformBool("material.useEmissiveTexture", useEmissiveMap);
 	}
 };

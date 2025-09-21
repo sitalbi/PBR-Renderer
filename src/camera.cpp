@@ -70,11 +70,28 @@ void Camera::lookRotate(float deltaTime, float xoffset, float yoffset)
 	updateCameraVectors();
 }
 
+void Camera::scroll(float yoffset)
+{
+	if (m_target) {
+		zoom(yoffset);
+	}
+	else {
+		setSpeed(yoffset);
+	}
+}
+
 void Camera::zoom(float yoffset)
 {
 	m_distance -= yoffset;
-	m_distance = glm::clamp(m_distance, 1.0f, 100.0f);
+	m_distance = glm::clamp(m_distance, 1.0f, 150.0f);
 	updateCameraVectors();
+}
+
+void Camera::setSpeed(float offset)
+{
+	m_speed += offset;
+	if (m_speed < 0.1f) m_speed = 0.1f;
+	if (m_speed > 100.0f) m_speed = 100.0f;
 }
 
 void Camera::moveForward(float deltaTime)

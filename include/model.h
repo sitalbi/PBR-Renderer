@@ -1,6 +1,9 @@
 #pragma once
 #include "mesh.h"
 #include <string>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 class Model
 {
@@ -21,4 +24,7 @@ private:
 
 	std::vector<Mesh> submeshes;
 
+	void processNode(aiNode* node, const aiScene* scene, const std::string& directory);
+	Mesh processMesh(aiMesh* mesh);
+	std::shared_ptr<Material> loadMaterial(aiMaterial* aiMat, const std::string& directory);
 };

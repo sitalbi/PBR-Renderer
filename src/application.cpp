@@ -90,17 +90,17 @@ void Application::init()
 	m_materials["Scuffed Plastic"] = scuffedPlasticMat;
 
 	// Kabuto material
-	Material m_kabutoMaterial;
+	/*Material m_kabutoMaterial;
 	m_kabutoMaterial.shader = m_renderer->getPBRShader();
 	m_kabutoMaterial.albedoMap = std::make_shared<Texture>(RES_DIR"/textures/materials/kabuto/Material_baseColor.png");
 	m_kabutoMaterial.normalMap = std::make_shared<Texture>(RES_DIR"/textures/materials/kabuto/Material_normal.png");
 	m_kabutoMaterial.metallicMap = std::make_shared<Texture>(RES_DIR"/textures/materials/kabuto/Material_metallic.png");
-	m_kabutoMaterial.roughnessMap = std::make_shared<Texture>(RES_DIR"/textures/materials/kabuto/Material_roughness.png");
+	m_kabutoMaterial.roughnessMap = std::make_shared<Texture>(RES_DIR"/textures/materials/kabuto/Material_roughness.png");*/
 
-	m_kabutoMaterial.useAlbedoMap = true;
+	/*m_kabutoMaterial.useAlbedoMap = true;
 	m_kabutoMaterial.useNormalMap = true;
 	m_kabutoMaterial.useMetalMap = true;
-	m_kabutoMaterial.useRoughMap = true;
+	m_kabutoMaterial.useRoughMap = true;*/
 
 	// Create default models
 	std::shared_ptr<Model> m_sphereMesh = std::make_shared<Model>();
@@ -111,30 +111,39 @@ void Application::init()
 	m_cubeMesh->loadCube(1.0f);
 	m_models[ModelType::Cube] = m_cubeMesh;
 
-	std::shared_ptr<Model> m_suzanneMesh = std::make_shared<Model>();
+	/*std::shared_ptr<Model> m_suzanneMesh = std::make_shared<Model>();
 	m_suzanneMesh->loadModel(RES_DIR"/models/suzanne.obj");
-	m_models[ModelType::Suzanne] = m_suzanneMesh;
+	m_models[ModelType::Suzanne] = m_suzanneMesh;*/
 
-	std::shared_ptr<Model> m_kabutoMesh = std::make_shared<Model>();
-	m_kabutoMesh->loadModel(RES_DIR"/models/kabuto.obj");
-	m_models[ModelType::Kabuto] = m_kabutoMesh;
+	/*std::shared_ptr<Model> m_kabutoModel = std::make_shared<Model>();
+	m_kabutoModel->loadModel(RES_DIR"/models/pbr_kabuto_samurai_helmet/scene.gltf");*/
+
+	/*std::shared_ptr<Model> helmetModel = std::make_shared<Model>();
+	helmetModel->loadModel(RES_DIR"/models/DamagedHelmet/DamagedHelmet.gltf");*/
+
+	std::shared_ptr<Model> sponzaModel = std::make_shared<Model>();
+	sponzaModel->loadModel(RES_DIR"/models/sponza/sponza.obj");
 
 	std::unique_ptr<Scene> scene = std::make_unique<Scene>();
 
 	//scene->addEntity(std::make_shared<Entity>(m_models[ModelType::Kabuto], glm::vec3(5.0f, 0.0f, 0.0f), "Kabuto"));
-	std::shared_ptr<Entity> sphere = std::make_shared<Entity>(m_models[ModelType::Sphere], glm::vec3(0.0f, 0.0f, 0.0f), "Sphere");
-	sphere->setMaterial(0, *basicMat.get());
+	//std::shared_ptr<Entity> sphere = std::make_shared<Entity>(m_models[ModelType::Sphere], glm::vec3(0.0f, 0.0f, 0.0f), "Sphere");
+	//sphere->setMaterial(0, *basicMat.get());
 
-	std::shared_ptr<Entity> cube = std::make_shared<Entity>(m_models[ModelType::Cube], glm::vec3(-5.0f, 0.0f, 0.0f), "Cube");
-	cube->setMaterial(0, *lightgoldMat.get());
+	//std::shared_ptr<Entity> cube = std::make_shared<Entity>(m_models[ModelType::Cube], glm::vec3(-5.0f, 0.0f, 0.0f), "Cube");
+	//cube->setMaterial(0, *lightgoldMat.get());
 
-	std::shared_ptr<Entity> plane = std::make_shared<Entity>(m_models[ModelType::Cube], glm::vec3(0.0f, -2.0f, 0.0f), "Plane");
-	//plane->setMaterial(0, *basicMat.get());
-	plane->scale = glm::vec3(20.0f, 0.1f, 20.0f);
+	//std::shared_ptr<Entity> plane = std::make_shared<Entity>(m_models[ModelType::Cube], glm::vec3(0.0f, -2.0f, 0.0f), "Plane");
+	////plane->setMaterial(0, *basicMat.get());
+	//plane->scale = glm::vec3(20.0f, 0.1f, 20.0f);
 
-	scene->addEntity(sphere);
+	/*scene->addEntity(sphere);
 	scene->addEntity(cube);
-	scene->addEntity(plane);
+	scene->addEntity(plane);*/
+
+	std::shared_ptr<Entity> sponza = std::make_shared<Entity>(sponzaModel, glm::vec3(0.0f, 0.0f, 0.0f), "Sponza");
+	sponza->scale = glm::vec3(0.05f);
+	scene->addEntity(sponza);
 
 	m_renderer->setCurrentScene(std::move(scene));
 }
@@ -159,7 +168,7 @@ void Application::initUI()
 
 	setupImGuiStyle();
 
-	// Setup mesh selecction dropdown data
+	// Setup mesh selection dropdown data
 	auto meshTypeNames = magic_enum::enum_names<ModelType>(); 
 	for (const auto& name : meshTypeNames) {
 		m_meshTypes.push_back(name.data());
@@ -212,46 +221,50 @@ void Application::updateUI()
 	// Entity list
 	for (auto& entity : currentScene->getEntities()) {
 		if (ImGui::TreeNode(entity->getName().c_str())) {
-			for (int i = 0; i < entity->getModel()->getSubmeshes().size(); i++)
+			if (ImGui::TreeNode("Meshes"))
 			{
-				if (ImGui::TreeNode("Mesh")) {
-					if (entity->isUsingMaterial())
-					{
-						if (ImGui::TreeNode("Material")) {
-							Material& material = entity->getMaterial(i);
-							if (!material.useAlbedoMap) {
-								ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
-							}
-							else {
-								ImGui::Text("Non editable Albedo Map");
-							}
-							if (!material.useMetalMap) {
-								ImGui::SliderFloat("Metallic", &material.metallic, 0.0f, 1.0f);
-							}
-							else {
-								ImGui::Text("Non editable Metallic Map");
-							}
-							if (!material.useRoughMap) {
-								ImGui::SliderFloat("Roughness", &material.roughness, 0.0f, 1.0f);
-							}
-							else {
-								ImGui::Text("Non editable Roughness Map");
-							}
-							ImGui::ColorEdit3("Emissive Color", glm::value_ptr(material.emissiveColor), ImGuiColorEditFlags_HDR);
-							ImGui::TreePop();
-
-						}
-					}
-					else {
-						ImGui::Text("No Material Assigned");
-						if (ImGui::Button("Add new Material"))
+				for (int i = 0; i < entity->getModel()->getSubmeshes().size(); i++)
+				{
+					if (ImGui::TreeNode(("Mesh##" + std::to_string(i)).c_str())) {
+						if (entity->isUsingMaterial())
 						{
-							// Assign default material
-							std::shared_ptr<Material> defaultMat = m_materials["Default"];
-							entity->setMaterial(i, *defaultMat.get());
+							if (ImGui::TreeNode("Material")) {
+								Material& material = entity->getMaterial(i);
+								if (!material.useAlbedoMap) {
+									ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo));
+								}
+								else {
+									ImGui::Text("Non editable Albedo Map");
+								}
+								if (!material.useMetalMap) {
+									ImGui::SliderFloat("Metallic", &material.metallic, 0.0f, 1.0f);
+								}
+								else {
+									ImGui::Text("Non editable Metallic Map");
+								}
+								if (!material.useRoughMap) {
+									ImGui::SliderFloat("Roughness", &material.roughness, 0.0f, 1.0f);
+								}
+								else {
+									ImGui::Text("Non editable Roughness Map");
+								}
+								ImGui::ColorEdit3("Emissive Color", glm::value_ptr(material.emissiveColor), ImGuiColorEditFlags_HDR);
+								ImGui::TreePop();
+
+							}
 						}
+						else {
+							ImGui::Text("No Material Assigned");
+							if (ImGui::Button("Add new Material"))
+							{
+								// NOT WORKING IF MULTIPLE SUBMESHES
+								// Assign default material
+								/*std::shared_ptr<Material> defaultMat = m_materials["Default"];
+								entity->setMaterial(i, *defaultMat.get());*/
+							}
+						}
+						ImGui::TreePop();
 					}
-					ImGui::TreePop();
 				}
 			}
 			if (ImGui::TreeNode("Transform")) {
@@ -417,7 +430,7 @@ void Application::setCallbacks()
 
 	glfwSetScrollCallback(window, [](GLFWwindow* window, double xoffset, double yoffset) {
 		Camera* cam = static_cast<Camera*>(glfwGetWindowUserPointer(window));
-		cam->zoom(yoffset);
+		cam->scroll(yoffset);
 	});
 }
 

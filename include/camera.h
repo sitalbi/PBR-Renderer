@@ -53,7 +53,10 @@ public:
 	void moveUp(float deltaTime);
 	void moveDown(float deltaTime);
 
+	void scroll(float yoffset);
 	void zoom(float yoffset);
+
+	void setSpeed(float offset);
 
 	double lastX;
 	double lastY;
@@ -76,12 +79,12 @@ private:
 	float m_pitch;
 	float m_fov = 60.0f;
 
-	float m_farClippingPlane = 100.0f;
+	float m_farClippingPlane = 300.0;
 	float m_nearClippingPlane = 0.1f;
 
 	float m_speed = 3.0f;
 
 	float m_minDistance = 0.75f;
-	float m_maxDistance = 100.0f;
+	float m_maxDistance = 200.0f;
 
 };
