@@ -12,6 +12,7 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
   <img src="https://github.com/sitalbi/PBR-Renderer/blob/main/res/screenshots/screen2.png" width="650">
   <img src="https://github.com/sitalbi/PBR-Renderer/blob/main/res/screenshots/screen3.png" width="650">
   <img src="https://github.com/sitalbi/PBR-Renderer/blob/main/res/screenshots/screen4.png" width="650">
+  <img src="https://github.com/sitalbi/PBR-Renderer/blob/main/res/screenshots/screen5.png" width="650">
 </p>
 
 ## Features:

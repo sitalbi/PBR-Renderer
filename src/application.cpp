@@ -116,13 +116,13 @@ void Application::init()
 	m_models[ModelType::Suzanne] = m_suzanneMesh;*/
 
 	/*std::shared_ptr<Model> m_kabutoModel = std::make_shared<Model>();
-	m_kabutoModel->loadModel(RES_DIR"/models/pbr_kabuto_samurai_helmet/kabuto.gltf");*/
+	//m_kabutoModel->loadModel(RES_DIR"/models/pbr_kabuto_samurai_helmet/kabuto.gltf");*/
 
-	std::shared_ptr<Model> helmetModel = std::make_shared<Model>();
-	helmetModel->loadModel(RES_DIR"/models/DamagedHelmet/DamagedHelmet.gltf");
+	/*std::shared_ptr<Model> helmetModel = std::make_shared<Model>();
+	helmetModel->loadModel(RES_DIR"/models/DamagedHelmet/DamagedHelmet.gltf");*/
 
-	/*std::shared_ptr<Model> sponzaModel = std::make_shared<Model>();
-	sponzaModel->loadModel(RES_DIR"/models/sponza/sponza.obj");*/
+	std::shared_ptr<Model> sponzaModel = std::make_shared<Model>();
+	sponzaModel->loadModel(RES_DIR"/models/sponza/sponza.obj");
 
 	std::unique_ptr<Scene> scene = std::make_unique<Scene>();
 
@@ -141,8 +141,8 @@ void Application::init()
 	scene->addEntity(cube);
 	scene->addEntity(plane);*/
 
-	std::shared_ptr<Entity> sponza = std::make_shared<Entity>(helmetModel, glm::vec3(0.0f, 0.0f, 0.0f), "Kabuto");
-	//sponza->scale = glm::vec3(0.05f);
+	std::shared_ptr<Entity> sponza = std::make_shared<Entity>(sponzaModel, glm::vec3(0.0f, 0.0f, 0.0f), "Sponza");
+	sponza->scale = glm::vec3(0.01f);
 	scene->addEntity(sponza);
 
 	m_renderer->setCurrentScene(std::move(scene));
@@ -200,8 +200,13 @@ void Application::updateUI()
 	ImGui::Checkbox("Anti-Aliasing", &m_renderer->useAA);
 	ImGui::SetNextItemWidth(100.0f);
 	ImGui::SliderFloat("Exposure", &m_renderer->exposure, 0.01f, 1.0f);
-	ImGui::Text("Light Direction");
-	if (ImGui::InputFloat3("Light Direction", glm::value_ptr(m_renderer->lightDir))) {
+	ImGui::Text("Directional Light");
+	ImGui::SameLine();
+	ImGui::TextDisabled("(?)");
+	if (ImGui::IsItemHovered())
+		ImGui::SetTooltip("Direction of the sun light. Use negative Y for top-down.");
+
+	if (ImGui::DragFloat3("##LightDir", glm::value_ptr(m_renderer->lightDir), 0.01f, -1.0f, 1.0f)) {
 		m_renderer->updateLighting();
 	}
 	ImGui::Text("Light Intensity");

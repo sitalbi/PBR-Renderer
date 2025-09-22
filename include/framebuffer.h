@@ -31,7 +31,7 @@ public:
 
 	bool isComplete();
 
-	void createColorAttachment();
+	void createColorAttachment(unsigned int format = GL_RGBA16F);
 
 	void addColorAttachment(unsigned int textureID);
 
