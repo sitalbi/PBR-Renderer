@@ -22,6 +22,7 @@ private:
 
 	double m_lastX, m_lastY;
 	bool m_firstMouse = true;
+	bool m_dockInitialized = false;
 
 	float m_deltaTime = 0.0f;
 	float m_lastFrame = 0.0f;

@@ -7,6 +7,7 @@
 #include <future>
 #include <magic_enum.hpp>
 #include "skybox.h"
+#include <imgui_internal.h>
 
 Application::Application()
 {
@@ -121,8 +122,8 @@ void Application::init()
 	/*std::shared_ptr<Model> helmetModel = std::make_shared<Model>();
 	helmetModel->loadModel(RES_DIR"/models/DamagedHelmet/DamagedHelmet.gltf");*/
 
-	std::shared_ptr<Model> sponzaModel = std::make_shared<Model>();
-	sponzaModel->loadModel(RES_DIR"/models/sponza/sponza.obj");
+	/*std::shared_ptr<Model> sponzaModel = std::make_shared<Model>();
+	sponzaModel->loadModel(RES_DIR"/models/sponza/sponza.obj");*/
 
 	std::unique_ptr<Scene> scene = std::make_unique<Scene>();
 
@@ -141,8 +142,8 @@ void Application::init()
 	scene->addEntity(cube);
 	scene->addEntity(plane);*/
 
-	std::shared_ptr<Entity> sponza = std::make_shared<Entity>(sponzaModel, glm::vec3(0.0f, 0.0f, 0.0f), "Sponza");
-	sponza->scale = glm::vec3(0.01f);
+	std::shared_ptr<Entity> sponza = std::make_shared<Entity>(m_sphereMesh, glm::vec3(0.0f, 0.0f, 0.0f), "Sponza");
+	//sponza->scale = glm::vec3(0.01f);
 	scene->addEntity(sponza);
 
 	m_renderer->setCurrentScene(std::move(scene));
@@ -187,13 +188,49 @@ void Application::updateUI()
 
 	// Use main window as dock space
     ImGui::DockSpaceOverViewport(ImGui::GetMainViewport()->ID);
+	if (!m_dockInitialized)
+	{
+		m_dockInitialized = true;
+
+		ImGuiID dockspace_id = ImGui::GetMainViewport()->ID;
+
+		ImGui::DockBuilderRemoveNode(dockspace_id); // Clear existing
+		ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace);
+		ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetMainViewport()->Size);
+
+		// Split main dockspace into left column (20%) and the rest
+		ImGuiID dock_main_id = dockspace_id;
+		ImGuiID dock_left = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left, 0.2f, nullptr, &dock_main_id);
+
+		// Now split the left column vertically into 3 parts
+		ImGuiID dock_info = ImGui::DockBuilderSplitNode(dock_left, ImGuiDir_Up, 0.33f, nullptr, &dock_left);
+		ImGuiID dock_post = ImGui::DockBuilderSplitNode(dock_left, ImGuiDir_Up, 0.5f, nullptr, &dock_left);
+		ImGuiID dock_scene = dock_left;
+
+		// Dock windows
+		ImGui::DockBuilderDockWindow("Info", dock_info);
+		ImGui::DockBuilderDockWindow("Post-Processing", dock_post);
+		ImGui::DockBuilderDockWindow("Scene Editor", dock_scene);
+
+		// Main viewport in center
+		ImGui::DockBuilderDockWindow("Viewport", dock_main_id);
+
+		ImGui::DockBuilderFinish(dockspace_id);
+	}
+
 
 	// Info Panel 
+	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(200, 500), ImGuiCond_FirstUseEver);
+	ImGui::SetWindowCollapsed(false, ImGuiCond_FirstUseEver);
 	ImGui::Begin("Info");
 	ImGui::Text("%.3f ms/frame", 1000.0f / ImGui::GetIO().Framerate);
 	ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
 	ImGui::End();
 
+	ImGui::SetNextWindowPos(ImVec2(10, 120), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(300, 500), ImGuiCond_FirstUseEver);
+	ImGui::SetWindowCollapsed(false, ImGuiCond_FirstUseEver);
 	ImGui::Begin("Post-Processing");
 	ImGui::Checkbox("SSAO", &m_renderer->useSSAO);
 	ImGui::Checkbox("Bloom", &m_renderer->useBloom);
@@ -221,6 +258,10 @@ void Application::updateUI()
 	}
 	ImGui::End();
 
+
+	ImGui::SetNextWindowPos(ImVec2(350, 10), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(450, 500), ImGuiCond_FirstUseEver);
+	ImGui::SetWindowCollapsed(false, ImGuiCond_FirstUseEver);
 	ImGui::Begin("Scene Editor");
 
 	// Entity list
@@ -262,15 +303,14 @@ void Application::updateUI()
 							ImGui::Text("No Material Assigned");
 							if (ImGui::Button("Add new Material"))
 							{
-								// NOT WORKING IF MULTIPLE SUBMESHES
-								// Assign default material
-								/*std::shared_ptr<Material> defaultMat = m_materials["Default"];
-								entity->setMaterial(i, *defaultMat.get());*/
+								// Add entity material override
+								entity->setMaterial(i, *Model::defaultMaterial.get());
 							}
 						}
 						ImGui::TreePop();
 					}
 				}
+				ImGui::TreePop();
 			}
 			if (ImGui::TreeNode("Transform")) {
 				ImGui::InputFloat3("Position", glm::value_ptr(entity->position));

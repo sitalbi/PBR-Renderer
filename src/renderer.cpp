@@ -89,7 +89,6 @@ void Renderer::init()
 		std::cerr << "Background framebuffer is incomplete" << std::endl;
 	}
 
-	// TODO: fix shadow mapping to work with sponza (large sizes)
 	// Initialize depth-only framebuffer for shadow mapping
 	m_depthFB = std::make_unique<Framebuffer>(window_width, window_height);
 	// Create a depth texture
@@ -207,7 +206,7 @@ void Renderer::init()
 
 	// Bloom init
 	m_bloomRenderer = std::make_unique<BloomRenderer>();
-	m_bloomRenderer->init(window_width, window_height, 10);
+	m_bloomRenderer->init(window_width, window_height, 8);
 
 	m_brightFB = std::make_unique<Framebuffer>(window_width, window_height);
 	m_brightFB->createColorAttachment(); // bright color
@@ -399,7 +398,7 @@ void Renderer::render()
 		m_brightFB->unbind();
 
 		// Bloom pass
-		m_bloomRenderer->renderBloomTexture(m_brightFB->textures[0], 0.0015f);
+		m_bloomRenderer->renderBloomTexture(m_brightFB->textures[0], 0.005f);
 	}
 
 
@@ -528,7 +527,7 @@ bool BloomRenderer::init(unsigned int windowWidth, unsigned int windowHeight, un
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F,
 			(int)mipSize.x, (int)mipSize.y,
-			0, GL_RGB, GL_FLOAT, nullptr);
+			0, GL_RGBA, GL_FLOAT, nullptr);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

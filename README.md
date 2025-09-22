@@ -1,4 +1,4 @@
-# Physically Based Renderer
+﻿# Physically Based Renderer
 
 This is a simple 3D Real Time physically based renderer written in C++ and OpenGL.
 It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org/wiki/Specular_highlight#Cook%E2%80%93Torrance_model) to simulate the reflection of light on a surface.
@@ -27,13 +27,40 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 - Shadows using shadow mapping
 - Camera: free movement camera and orbit camera
 
-## Dependencies:
-- [GLFW](https://www.glfw.org/) Window management and input handling
-- [GLAD](https://glad.dav1d.de/) OpenGL function loading
-- [glm](https://github.com/g-truc/glm) OpenGL mathematics library
-- [imgui](https://github.com/ocornut/imgui) GUI
-- [assimp](https://github.com/assimp/assimp) Model loading library
+## Build Instructions:
+### Requirements 
+Before building, make sure you have the following installed: 
+- CMake ≥ 3.20 
+- C++ 20 compatible compiler (e.g. g++ 11+, MSVC 2019+, or clang 13+) 
 
+### Dependencies 
+This project uses the following external libraries as submodules: 
+- [GLFW](https://www.glfw.org/)
+- [GLAD](https://glad.dav1d.de/)
+- [glm](https://github.com/g-truc/glm)
+- [Assimp](https://github.com/assimp/assimp)
+- [imgui](https://github.com/ocornut/imgui)
+- [stb](https://github.com/nothings/stb)
+- [magic_enum](https://github.com/Neargye/magic_enum) 
+ 
+### How to Build 
+- Create a build directory 
+```
+mkdir build && cd build
+```
+- Generate build files (e.g. for Visual Studio, use -G "Visual Studio 17 2022") 
+```
+cmake .. 
+```
+- Build the project 
+```
+cmake --build . --config Release
+```
+
+> *Use `--config Debug` for debug builds*
+
+- After the build completes, the executable will be available in the build output directory. 
+ 
 ## TODO:
 - Hot reload for shaders
 - Deferred rendering
