@@ -8,6 +8,7 @@
 #include <magic_enum.hpp>
 #include "skybox.h"
 #include <imgui_internal.h>
+#include <filesystem>
 
 Application::Application()
 {
@@ -125,6 +126,9 @@ void Application::init()
 	/*std::shared_ptr<Model> sponzaModel = std::make_shared<Model>();
 	sponzaModel->loadModel(RES_DIR"/models/sponza/sponza.obj");*/
 
+	std::shared_ptr<Model> f1Model = std::make_shared<Model>();
+	f1Model->loadModel(RES_DIR"/models/f1_2021_mclaren_mcl35m/scene.gltf");
+
 	std::unique_ptr<Scene> scene = std::make_unique<Scene>();
 
 	//scene->addEntity(std::make_shared<Entity>(m_models[ModelType::Kabuto], glm::vec3(5.0f, 0.0f, 0.0f), "Kabuto"));
@@ -142,9 +146,16 @@ void Application::init()
 	scene->addEntity(cube);
 	scene->addEntity(plane);*/
 
-	std::shared_ptr<Entity> sponza = std::make_shared<Entity>(m_sphereMesh, glm::vec3(0.0f, 0.0f, 0.0f), "Sponza");
-	//sponza->scale = glm::vec3(0.01f);
-	scene->addEntity(sponza);
+	std::shared_ptr<Entity> entity = std::make_shared<Entity>(f1Model, glm::vec3(0.0f, 0.0f, 0.0f), "F1");
+	std::shared_ptr<Entity> wall = std::make_shared<Entity>(m_cubeMesh, glm::vec3(-5.0f, 0.0f, 0.0f), "Wall");
+	wall->scale = glm::vec3(0.1f, 5.0f, 20.0f);
+	std::shared_ptr<Entity> light = std::make_shared<Entity>(m_sphereMesh, glm::vec3(5.0f, 0.0f, 0.0f), "Point Light");
+	light->pointLight = std::make_shared<PointLightComponent>();
+	light->scale = glm::vec3(0.2f);
+	
+	scene->addEntity(wall);
+	scene->addEntity(entity);
+	scene->addEntity(light);
 
 	m_renderer->setCurrentScene(std::move(scene));
 }
@@ -188,35 +199,7 @@ void Application::updateUI()
 
 	// Use main window as dock space
     ImGui::DockSpaceOverViewport(ImGui::GetMainViewport()->ID);
-	if (!m_dockInitialized)
-	{
-		m_dockInitialized = true;
-
-		ImGuiID dockspace_id = ImGui::GetMainViewport()->ID;
-
-		ImGui::DockBuilderRemoveNode(dockspace_id); // Clear existing
-		ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace);
-		ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetMainViewport()->Size);
-
-		// Split main dockspace into left column (20%) and the rest
-		ImGuiID dock_main_id = dockspace_id;
-		ImGuiID dock_left = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left, 0.2f, nullptr, &dock_main_id);
-
-		// Now split the left column vertically into 3 parts
-		ImGuiID dock_info = ImGui::DockBuilderSplitNode(dock_left, ImGuiDir_Up, 0.33f, nullptr, &dock_left);
-		ImGuiID dock_post = ImGui::DockBuilderSplitNode(dock_left, ImGuiDir_Up, 0.5f, nullptr, &dock_left);
-		ImGuiID dock_scene = dock_left;
-
-		// Dock windows
-		ImGui::DockBuilderDockWindow("Info", dock_info);
-		ImGui::DockBuilderDockWindow("Post-Processing", dock_post);
-		ImGui::DockBuilderDockWindow("Scene Editor", dock_scene);
-
-		// Main viewport in center
-		ImGui::DockBuilderDockWindow("Viewport", dock_main_id);
-
-		ImGui::DockBuilderFinish(dockspace_id);
-	}
+	setDockingSpace();
 
 
 	// Info Panel 
@@ -238,11 +221,6 @@ void Application::updateUI()
 	ImGui::SetNextItemWidth(100.0f);
 	ImGui::SliderFloat("Exposure", &m_renderer->exposure, 0.01f, 1.0f);
 	ImGui::Text("Directional Light");
-	ImGui::SameLine();
-	ImGui::TextDisabled("(?)");
-	if (ImGui::IsItemHovered())
-		ImGui::SetTooltip("Direction of the sun light. Use negative Y for top-down.");
-
 	if (ImGui::DragFloat3("##LightDir", glm::value_ptr(m_renderer->lightDir), 0.01f, -1.0f, 1.0f)) {
 		m_renderer->updateLighting();
 	}
@@ -313,9 +291,9 @@ void Application::updateUI()
 				ImGui::TreePop();
 			}
 			if (ImGui::TreeNode("Transform")) {
-				ImGui::InputFloat3("Position", glm::value_ptr(entity->position));
-				ImGui::InputFloat3("Rotation", glm::value_ptr(entity->rotation));
-				ImGui::InputFloat3("Scale", glm::value_ptr(entity->scale));
+				ImGui::DragFloat3("Position", glm::value_ptr(entity->position), 0.1f);
+				ImGui::DragFloat3("Rotation", glm::value_ptr(entity->rotation), 0.1f);
+				ImGui::DragFloat3("Scale", glm::value_ptr(entity->scale), 0.1f, 0.1f, 200.0f);
 
 				if (ImGui::Button("Reset Transform")) {
 					entity->position = glm::vec3(0.0f);
@@ -323,6 +301,25 @@ void Application::updateUI()
 					entity->scale = glm::vec3(1.0f);
 				}
 				ImGui::TreePop();
+			}
+			// Point light component
+			if (entity->pointLight) {
+				if (ImGui::TreeNode("Point Light")) {
+					ImGui::ColorEdit3("Color", glm::value_ptr(entity->pointLight->color));
+					ImGui::SliderFloat("Intensity", &entity->pointLight->intensity, 0.0f, 100.0f);
+					ImGui::SliderFloat("Constant", &entity->pointLight->constant, 0.0f, 1.0f);
+					ImGui::SliderFloat("Linear", &entity->pointLight->linear, 0.0f, 0.5f);
+					ImGui::SliderFloat("Quadratic", &entity->pointLight->quadratic, 0.0f, 0.1f);
+					if (ImGui::Button("Remove Point Light")) {
+						entity->pointLight = nullptr;
+					}
+					ImGui::TreePop();
+				}
+			}
+			else {
+				if (ImGui::Button("Add Point Light Component")) {
+					entity->pointLight = std::make_shared<PointLightComponent>();
+				}
 			}
 			
 			if (cam->hasTarget() && cam->getTarget() == entity) {
@@ -553,4 +550,41 @@ void Application::setupImGuiStyle()
 	colors[ImGuiCol_NavWindowingDimBg] = colors[ImGuiCol_Header];
 	colors[ImGuiCol_ModalWindowDimBg] = colors[ImGuiCol_WindowBg];
 
+}
+
+void Application::setDockingSpace()
+{
+	if (!m_dockInitialized)
+	{
+		if (std::filesystem::exists(ImGui::GetIO().IniFilename)) {
+			return;
+		}
+
+		m_dockInitialized = true;
+
+		ImGuiID dockspace_id = ImGui::GetMainViewport()->ID;
+
+		ImGui::DockBuilderRemoveNode(dockspace_id); // Clear existing
+		ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace);
+		ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetMainViewport()->Size);
+
+		// Split main dockspace into left column (20%) and the rest
+		ImGuiID dock_main_id = dockspace_id;
+		ImGuiID dock_left = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left, 0.2f, nullptr, &dock_main_id);
+
+		// Now split the left column vertically into 3 parts
+		ImGuiID dock_info = ImGui::DockBuilderSplitNode(dock_left, ImGuiDir_Up, 0.15f, nullptr, &dock_left);
+		ImGuiID dock_post = ImGui::DockBuilderSplitNode(dock_left, ImGuiDir_Up, 0.45f, nullptr, &dock_left);
+		ImGuiID dock_scene = dock_left;
+
+		// Dock windows
+		ImGui::DockBuilderDockWindow("Info", dock_info);
+		ImGui::DockBuilderDockWindow("Post-Processing", dock_post);
+		ImGui::DockBuilderDockWindow("Scene Editor", dock_scene);
+
+		// Main viewport in center
+		ImGui::DockBuilderDockWindow("Viewport", dock_main_id);
+
+		ImGui::DockBuilderFinish(dockspace_id);
+	}
 }

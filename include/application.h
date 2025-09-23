@@ -46,4 +46,6 @@ private:
 	void deltaTime();
 
 	void setupImGuiStyle();
+
+	void setDockingSpace();
 };

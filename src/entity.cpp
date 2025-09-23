@@ -20,17 +20,28 @@ void Entity::draw(std::shared_ptr<Shader> shader, const glm::mat4& view, const g
 	shader->setUniformMat4f("view", view);
 	shader->setUniformMat4f("projection", projection);
 
-
+	if (pointLight) {
+		if (materialOverrides.find(0) == materialOverrides.end()) {
+			Material lightMat;
+			lightMat.shader = shader;
+			lightMat.emissiveColor = pointLight->color * pointLight->intensity;
+			materialOverrides[0] = lightMat;
+		}
+		else {
+			materialOverrides[0].emissiveColor = pointLight->color * pointLight->intensity;
+		}
+	}
 
 	auto& submeshes = m_model->getSubmeshes();
 	for (size_t i = 0; i < submeshes.size(); ++i) {
-		Material* mat = materialOverrides.find(i) != materialOverrides.end() 
+		Material* mat = materialOverrides.find(i) != materialOverrides.end()
 			? &materialOverrides[i]
 			: submeshes[i].material.get();
 
 			mat->bind();
 			submeshes[i].draw();
 	}
+	
 }
 
 glm::mat4 Entity::getModelMatrix()

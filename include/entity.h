@@ -6,6 +6,16 @@
 #include <memory>
 #include <model.h>
 
+struct PointLightComponent {
+	glm::vec3 color = glm::vec3(1.0f);
+	float intensity = 1.0f;
+
+	// Attenuation parameters
+	float constant = 1.0f;
+	float linear = 0.09f;
+	float quadratic = 0.032f;
+};
+
 class Entity {
 public:
 	Entity();
@@ -45,6 +55,8 @@ public:
 	glm::vec3 position = glm::vec3(0.0f);
 	glm::vec3 rotation = glm::vec3(0.0f);
 	glm::vec3 scale = glm::vec3(1.0f);
+
+	std::shared_ptr<PointLightComponent> pointLight = nullptr;
 
 private:
 	std::shared_ptr<Model> m_model;

@@ -27,5 +27,7 @@ private:
 	bool m_isAddingEntity = false;
 
 	std::unique_ptr<Skybox> m_skybox;
+
+	int m_pointLightsNum = 0;
 	
 };

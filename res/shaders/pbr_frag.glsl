@@ -17,6 +17,21 @@ uniform vec3 camPos;
 uniform vec3 lightDir;
 uniform vec3 lightColor;
 
+#define MAX_POINT_LIGHTS 32
+
+struct PointLight {
+    vec3 position;
+    vec3 color;
+    float intensity;
+
+    float constant;
+    float linear;
+    float quadratic;
+};
+
+uniform int numPointLights;
+uniform PointLight pointLights[MAX_POINT_LIGHTS];
+
 // PBR material
 struct Material {
     bool useAlbedoTexture;
@@ -154,6 +169,34 @@ void main()
     // Direct lighting 
     vec3 radiance = lightColor;
     vec3 directLighting = (diff + spec)  * radiance  * NdotL  * (1.0 - shadow);
+
+    // Point light contribution
+    for (int i = 0; i < numPointLights; ++i)
+    {
+        PointLight light = pointLights[i];
+    
+        vec3 L = normalize(light.position - WorldPos);
+        vec3 H = normalize(V + L);
+        float distance = length(light.position - WorldPos);
+    
+        // Attenuation
+        float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+        vec3 radiance = light.color * light.intensity * attenuation;
+    
+        float NdotL = max(dot(N, L), 0.0);
+    
+        float NDF = DistributionGGX(N, H, roughness);
+        float G = GeometrySmith(N, V, L, roughness);
+        vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+    
+        vec3 kS = F;
+        vec3 kD = (vec3(1.0) - kS) * (1.0 - metallic);
+    
+        vec3 specular = (NDF * G * F) / (4.0 * max(dot(N, V), 0.0) * NdotL + 0.001);
+        vec3 diffuse = kD * albedo / PI;
+    
+        directLighting += (diffuse + specular) * radiance * NdotL;
+    }
 
     // IBL (ambient lighting)
     // Diffuse IBL
