@@ -50,9 +50,6 @@ void Renderer::init()
 		return;
 	}
 
-	// Enable anti-aliasing
-	//glEnable(GL_MULTISAMPLE);
-
 	// OpenGL settings
 	glEnable(GL_DEPTH_TEST);
 
@@ -74,6 +71,7 @@ void Renderer::init()
 	}
 
 	m_depthShader = std::make_shared<Shader>(RES_DIR "/shaders/depth_vert.glsl", RES_DIR "/shaders/empty_frag.glsl");
+	m_pointDepthShader = std::make_shared<Shader>(RES_DIR "/shaders/point_depth_vert.glsl", RES_DIR "/shaders/point_depth_frag.glsl");
 	m_lightingShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/quad_frag.glsl");
 	m_ssaoShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/ssao_frag.glsl");
 	m_ssaoBlurShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/ssao_blur_frag.glsl");
@@ -106,7 +104,7 @@ void Renderer::init()
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
 	// Attach the depth texture to the framebuffer
-	m_depthFB->setDepthTexture(shadowDepthTex, GL_DEPTH_ATTACHMENT);
+	m_depthFB->setDepthTexture(shadowDepthTex, GL_DEPTH_ATTACHMENT, false);
 	m_depthFB->bind();
 	glDrawBuffer(GL_NONE);
 	glReadBuffer(GL_NONE);
@@ -114,6 +112,28 @@ void Renderer::init()
 	if (!m_depthFB->isComplete()) {
 		std::cerr << "Depth framebuffer is incomplete" << std::endl;
 	}
+
+	// Point lights framebuffer
+	m_pointShadowFB = std::make_unique<Framebuffer>(window_width, window_height);
+
+	// Create a depth texture
+	GLuint pointShadowDepthTex;
+	glGenTextures(1, &pointShadowDepthTex);
+	glBindTexture(GL_TEXTURE_2D, pointShadowDepthTex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, 1024, 1024, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);// TODO use variables for width and height
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	m_pointShadowFB->setDepthTexture(pointShadowDepthTex, GL_DEPTH_ATTACHMENT, false);
+	m_pointShadowFB->bind();
+	// Disable writes to the color buffer
+	glDrawBuffer(GL_NONE);
+	// Disable reads from the color buffer
+	glReadBuffer(GL_NONE);
+	m_pointShadowFB->unbind();
 
 	// Initialize Geometry pass framebuffers
 	m_geometryFB = std::make_unique<Framebuffer>(window_width, window_height);
@@ -283,6 +303,46 @@ void Renderer::render()
 	}
 	m_depthFB->unbind();
 	glViewport(0, 0, window_width, window_height); // reset viewport
+
+	glDisable(GL_CULL_FACE);
+	for (auto& lightEntity : m_currentScene->getPointLights())
+	{
+		auto& light = lightEntity->pointLight;
+
+		m_pointShadowFB->bind();
+		glViewport(0, 0, 1024, 1024);
+
+		glm::vec3 lightPos = lightEntity->position;
+		float nearPlane = 1.0f;
+		float farPlane = light->shadowFarPlane;
+		glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), 1.0f, nearPlane, farPlane);
+
+		m_pointDepthShader->bind();
+		m_pointDepthShader->setUniformVec3f("lightPos", lightPos);
+		m_pointDepthShader->setUniform1f("farPlane", farPlane);
+
+		// render each face
+		for (unsigned int face = 0; face < 6; ++face)
+		{
+			// Attach correct face
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+				pointShadowDirection[face].CubemapFace, light->shadowCubemap, 0);
+
+			glClear(GL_DEPTH_BUFFER_BIT);
+			m_pointDepthShader->setUniformMat4f("shadowMatrix", shadowProj * glm::lookAt(lightPos, lightPos + pointShadowDirection[face].Target, pointShadowDirection[face].Up));
+
+			for (auto& entity : m_currentScene->getEntities())
+			{
+				m_pointDepthShader->setUniformMat4f("model", entity->getModelMatrix());
+				entity->drawModel();
+			}
+		}
+
+		m_pointShadowFB->unbind();
+	}
+	glViewport(0, 0, window_width, window_height);
+	glEnable(GL_CULL_FACE);
+
 
 	// Geometry pass
 	if (m_currentScene)

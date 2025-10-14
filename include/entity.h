@@ -6,7 +6,7 @@
 #include <memory>
 #include <model.h>
 
-struct PointLightComponent {
+struct PointLight {
 	glm::vec3 color = glm::vec3(1.0f);
 	float intensity = 1.0f;
 
@@ -14,6 +14,33 @@ struct PointLightComponent {
 	float constant = 1.0f;
 	float linear = 0.09f;
 	float quadratic = 0.032f;
+
+	bool hasMesh = true;
+
+
+	unsigned int shadowCubemap = 0;
+	const float shadowFarPlane = 300.0f;
+
+	PointLight() {
+		glGenTextures(1, &shadowCubemap);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, shadowCubemap);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+		for (int i = 0; i < 6; i++) {
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT32F,
+				1024, 1024, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+		}
+	}
+
+	~PointLight() {
+		if (shadowCubemap) {
+			glDeleteTextures(1, &shadowCubemap);
+		}
+	}
 };
 
 class Entity {
@@ -56,7 +83,7 @@ public:
 	glm::vec3 rotation = glm::vec3(0.0f);
 	glm::vec3 scale = glm::vec3(1.0f);
 
-	std::shared_ptr<PointLightComponent> pointLight = nullptr;
+	std::shared_ptr<PointLight> pointLight = nullptr;
 
 private:
 	std::shared_ptr<Model> m_model;

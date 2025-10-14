@@ -1,4 +1,4 @@
-#version 450 core
+﻿#version 450 core
 
 layout (location = 0) out vec4 gColor;
 layout (location = 1) out vec4 gNormal;
@@ -27,10 +27,12 @@ struct PointLight {
     float constant;
     float linear;
     float quadratic;
+    float farPlane;
 };
 
 uniform int numPointLights;
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
+uniform samplerCube pointShadowMaps[MAX_POINT_LIGHTS];
 
 // PBR material
 struct Material {
@@ -110,6 +112,46 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     return shadow; 
 }  
 
+vec3 sampleOffsetDirections[20] = vec3[](
+    vec3( 1, 1, 1), vec3(-1, 1, 1), vec3( 1,-1, 1), vec3(-1,-1, 1),
+    vec3( 1, 1,-1), vec3(-1, 1,-1), vec3( 1,-1,-1), vec3(-1,-1,-1),
+    vec3( 1, 0, 0), vec3(-1, 0, 0), vec3( 0, 1, 0), vec3( 0,-1, 0),
+    vec3( 0, 0, 1), vec3( 0, 0,-1),
+    vec3( 1, 1, 0), vec3(-1, 1, 0), vec3( 1,-1, 0), vec3(-1,-1, 0),
+    vec3( 0, 1, 1), vec3( 0,-1, 1)
+);
+
+float ShadowPointLight(int index, vec3 fragPos, vec3 lightPos)
+{
+    vec3 fragToLight = fragPos - lightPos;
+    float currentDepth = length(fragToLight);
+
+    if (currentDepth >= pointLights[index].farPlane)
+        return 0.0;
+
+    float bias = 0.005 + 0.02 * (1.0 - dot(normalize(Normal), normalize(fragToLight)));
+    bias = clamp(bias, 0.002, 0.015);
+
+
+    // PCF sample
+    float shadow = 0.0;
+    int samples = 16;
+    float diskRadius = 0.15;
+
+    for (int i = 0; i < samples; ++i)
+    {
+        vec3 sampleDir = normalize(fragToLight + sampleOffsetDirections[i] * diskRadius);
+        float closestDepth = texture(pointShadowMaps[index], sampleDir).r * pointLights[index].farPlane;
+
+        if (currentDepth - bias > closestDepth)
+            shadow += 1.0;
+    }
+
+    shadow /= float(samples);
+    return shadow;
+}
+
+
 void main()
 {
     // Material properties calculation
@@ -164,11 +206,11 @@ void main()
     vec3   diff = kD * albedo / PI;
 
     // Shadow factor for this fragment
-    float shadow = ShadowCalculation(lightSpaceMatrix * vec4(WorldPos,1.0));
+    float dirShadow = ShadowCalculation(lightSpaceMatrix * vec4(WorldPos,1.0));
 
     // Direct lighting 
     vec3 radiance = lightColor;
-    vec3 directLighting = (diff + spec)  * radiance  * NdotL  * (1.0 - shadow);
+    vec3 directLighting = (diff + spec)  * radiance  * NdotL  * (1.0 - dirShadow) * lightIntensity;
 
     // Point light contribution
     for (int i = 0; i < numPointLights; ++i)
@@ -195,7 +237,9 @@ void main()
         vec3 specular = (NDF * G * F) / (4.0 * max(dot(N, V), 0.0) * NdotL + 0.001);
         vec3 diffuse = kD * albedo / PI;
     
-        directLighting += (diffuse + specular) * radiance * NdotL;
+        float shadow = ShadowPointLight(i, WorldPos, light.position);
+        directLighting += (diffuse + specular) * radiance * NdotL * (1.0 - shadow);
+
     }
 
     // IBL (ambient lighting)
@@ -215,9 +259,11 @@ void main()
 
 
     // Final
-    vec3 colorOut = directLighting * lightIntensity + ambientLighting * ambientIntensity + emissive;
+    vec3 colorOut = directLighting + ambientLighting * ambientIntensity + emissive;
 
-    gColor = vec4(colorOut, 1.0);
+
+    //gColor = vec4(colorOut, 1.0);
+    gColor = vec4(min(colorOut, vec3(10.0)), 1.0);
     gNormal = vec4(normalize(viewSpaceN), 1.0); // normal in view space
     gPosition = vec4(ViewPos, 1.0); // position in view space
 }

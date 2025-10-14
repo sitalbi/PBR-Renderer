@@ -123,11 +123,11 @@ void Application::init()
 	/*std::shared_ptr<Model> helmetModel = std::make_shared<Model>();
 	helmetModel->loadModel(RES_DIR"/models/DamagedHelmet/DamagedHelmet.gltf");*/
 
-	/*std::shared_ptr<Model> sponzaModel = std::make_shared<Model>();
-	sponzaModel->loadModel(RES_DIR"/models/sponza/sponza.obj");*/
+	std::shared_ptr<Model> sponzaModel = std::make_shared<Model>();
+	sponzaModel->loadModel(RES_DIR"/models/sponza/sponza.obj");
 
-	std::shared_ptr<Model> f1Model = std::make_shared<Model>();
-	f1Model->loadModel(RES_DIR"/models/f1_2021_mclaren_mcl35m/scene.gltf");
+	/*std::shared_ptr<Model> f1Model = std::make_shared<Model>();
+	f1Model->loadModel(RES_DIR"/models/f1_2021_mclaren_mcl35m/scene.gltf");*/
 
 	std::unique_ptr<Scene> scene = std::make_unique<Scene>();
 
@@ -146,15 +146,14 @@ void Application::init()
 	scene->addEntity(cube);
 	scene->addEntity(plane);*/
 
-	std::shared_ptr<Entity> entity = std::make_shared<Entity>(f1Model, glm::vec3(0.0f, 0.0f, 0.0f), "F1");
-	std::shared_ptr<Entity> wall = std::make_shared<Entity>(m_cubeMesh, glm::vec3(-5.0f, 0.0f, 0.0f), "Wall");
-	wall->scale = glm::vec3(0.1f, 5.0f, 20.0f);
+	std::shared_ptr<Entity> sponza = std::make_shared<Entity>(sponzaModel, glm::vec3(5.0f, 0.0f, 0.0f), "Sponza");
+	sponza->scale = glm::vec3(0.1f);
+
 	std::shared_ptr<Entity> light = std::make_shared<Entity>(m_sphereMesh, glm::vec3(5.0f, 0.0f, 0.0f), "Point Light");
-	light->pointLight = std::make_shared<PointLightComponent>();
+	light->pointLight = std::make_shared<PointLight>();
 	light->scale = glm::vec3(0.2f);
 	
-	scene->addEntity(wall);
-	scene->addEntity(entity);
+	scene->addEntity(sponza);
 	scene->addEntity(light);
 
 	m_renderer->setCurrentScene(std::move(scene));
@@ -310,15 +309,18 @@ void Application::updateUI()
 					ImGui::SliderFloat("Constant", &entity->pointLight->constant, 0.0f, 1.0f);
 					ImGui::SliderFloat("Linear", &entity->pointLight->linear, 0.0f, 0.5f);
 					ImGui::SliderFloat("Quadratic", &entity->pointLight->quadratic, 0.0f, 0.1f);
-					if (ImGui::Button("Remove Point Light")) {
-						entity->pointLight = nullptr;
+					if (entity->pointLight->hasMesh) {
+						if (ImGui::Button("Hid Mesh")) {
+							entity->pointLight->hasMesh = false;
+						}
 					}
+					else {
+						if (ImGui::Button("Show Mesh")) {
+							entity->pointLight->hasMesh = true;
+						}
+					}
+					
 					ImGui::TreePop();
-				}
-			}
-			else {
-				if (ImGui::Button("Add Point Light Component")) {
-					entity->pointLight = std::make_shared<PointLightComponent>();
 				}
 			}
 			

@@ -37,7 +37,7 @@ public:
 
 	void addDepthRenderBuffer();
 	void addDepthTexture();
-	void setDepthTexture(unsigned int textureID, int attachement);
+	void setDepthTexture(unsigned int textureID, int attachment, bool isCubemap);
 
 	void setDrawBuffers();
 

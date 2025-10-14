@@ -13,6 +13,25 @@
 
 class BloomRenderer;
 
+struct PointShadowDirection
+{
+    GLenum CubemapFace;
+    glm::vec3 Target;
+    glm::vec3 Up;
+};
+
+constexpr PointShadowDirection pointShadowDirection[6] =
+{
+    { GL_TEXTURE_CUBE_MAP_POSITIVE_X, glm::vec3(1.0f,  0.0f,  0.0f),  glm::vec3(0.0f, -1.0f,  0.0f) },
+    { GL_TEXTURE_CUBE_MAP_NEGATIVE_X, glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f) },
+    { GL_TEXTURE_CUBE_MAP_POSITIVE_Y, glm::vec3(0.0f,  1.0f,  0.0f),  glm::vec3(0.0f,  0.0f, 1.0f) },
+    { GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, glm::vec3(0.0f, -1.0f,  0.0f),  glm::vec3(0.0f,  0.0f, -1.0f) },
+    { GL_TEXTURE_CUBE_MAP_POSITIVE_Z, glm::vec3(0.0f,  0.0f,  1.0f),  glm::vec3(0.0f, -1.0f,  0.0f) },
+    { GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, glm::vec3(0.0f,  0.0f, -1.0f),  glm::vec3(0.0f, -1.0f,  0.0f) }
+};
+
+
+
 class Renderer
 {
 public:
@@ -161,6 +180,7 @@ private:
 
 	std::shared_ptr<Shader> m_basicShader;
 	std::shared_ptr<Shader> m_depthShader;
+	std::shared_ptr<Shader> m_pointDepthShader;
 	std::shared_ptr<Shader> m_pbrShader;
 	std::unique_ptr<Shader> m_lightingShader;
 	std::unique_ptr<Shader> m_ssaoShader;
@@ -170,6 +190,7 @@ private:
 
     std::unique_ptr<Framebuffer> m_backgroundFB;
 	std::unique_ptr<Framebuffer> m_depthFB; 
+	std::unique_ptr<Framebuffer> m_pointShadowFB;
     std::unique_ptr<Framebuffer> m_geometryFB_MSAA;
     std::unique_ptr<Framebuffer> m_geometryFB;
 	std::unique_ptr<Framebuffer> m_ssaoFB;
@@ -177,6 +198,8 @@ private:
 	std::unique_ptr<Framebuffer> m_brightFB;
 	std::unique_ptr<Framebuffer> m_hdrFB;
 	std::unique_ptr<Framebuffer> m_finalCompositeFB;
+
+   // GLuint depthCubemaps[MAX_POINT_LIGHTS];
 
 	std::unique_ptr<BloomRenderer> m_bloomRenderer;
 

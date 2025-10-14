@@ -30,7 +30,7 @@ void Scene::draw(std::shared_ptr<Shader> shader, const glm::mat4& view, const gl
 	}
 
 	// Set point lights uniforms
-	shader->setUniform1i("numPointLights", m_pointLightsNum);
+	shader->setUniform1i("numPointLights", m_pointLights.size());
 
 	int i = 0;
 	// Draw entities
@@ -45,6 +45,12 @@ void Scene::draw(std::shared_ptr<Shader> shader, const glm::mat4& view, const gl
 			shader->setUniform1f(idx + ".constant", entity->pointLight->constant);
 			shader->setUniform1f(idx + ".linear", entity->pointLight->linear);
 			shader->setUniform1f(idx + ".quadratic", entity->pointLight->quadratic);
+			shader->setUniform1f(idx + ".farPlane", entity->pointLight->shadowFarPlane);
+
+			glActiveTexture(GL_TEXTURE20 + i);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, entity->pointLight->shadowCubemap);
+			shader->setUniform1i("pointShadowMaps[" + std::to_string(i) + "]", 20 + i);
+
 			++i;
 		}
 
@@ -63,13 +69,13 @@ void Scene::drawSkybox(const glm::mat4& view, const glm::mat4& projection)
 void Scene::addEntity(std::shared_ptr<Entity> entity) {
 	m_entities.push_back(entity);
 	if (entity->pointLight) {
-		m_pointLightsNum++;
+		m_pointLights.push_back(entity);
 	}
 }
 
 void Scene::deleteEntity(std::shared_ptr<Entity> entity) {
 	m_entities.erase(std::remove(m_entities.begin(), m_entities.end(), entity), m_entities.end());
 	if (entity->pointLight) {
-		m_pointLightsNum--;
+		m_pointLights.erase(std::remove(m_pointLights.begin(), m_pointLights.end(), entity), m_pointLights.end());
 	}
 }

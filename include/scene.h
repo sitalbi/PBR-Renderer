@@ -12,6 +12,7 @@ public:
 	void addEntity(std::shared_ptr<Entity> entity);
 	void deleteEntity(std::shared_ptr<Entity> entity);
 	std::vector<std::shared_ptr<Entity>> getEntities() { return m_entities; }
+	std::vector<std::shared_ptr<Entity>> getPointLights(){ return m_pointLights; }
 
 	glm::vec3& getNewEntityPosition() { return m_newEntityPosition; }
 	bool& getIsAddingEntity() { return m_isAddingEntity; }
@@ -22,6 +23,7 @@ public:
 
 private:
 	std::vector<std::shared_ptr<Entity>> m_entities;
+	std::vector<std::shared_ptr<Entity>> m_pointLights;
 
 	glm::vec3 m_newEntityPosition = glm::vec3(0.0f);
 	bool m_isAddingEntity = false;

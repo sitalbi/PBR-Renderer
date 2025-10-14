@@ -24,7 +24,8 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 - Model loading with Assimp
 - SSAO (Screen Space Ambient Occlusion)
 - HDR Bloom
-- Shadows using shadow mapping
+- Directional light and point lights
+- Shadows using shadow mapping (for both directional and point lights)
 - Camera: free movement camera and orbit camera
 
 ## Build Instructions:
@@ -64,8 +65,7 @@ cmake --build . --config Release
 ## TODO:
 - Hot reload for shaders
 - Deferred rendering
-- Scene save/load 
-- multiple lights (point lights)
+- Scene save/load
 
 ## Credits:
 

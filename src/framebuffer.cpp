@@ -95,11 +95,22 @@ void Framebuffer::addDepthTexture()
 	unbind();
 }
 
-void Framebuffer::setDepthTexture(unsigned int textureID, int attachment)
+void Framebuffer::setDepthTexture(unsigned int textureID, int attachment, bool isCubemap)
 {
 	depthTexture = textureID;
 	bind();
-	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, textureID, 0);
+
+	if (isCubemap)
+	{
+		// attach entire cubemap to depth attachment
+		glFramebufferTexture(GL_FRAMEBUFFER, attachment, textureID, 0);
+	}
+	else
+	{
+		// standard 2D texture
+		glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, textureID, 0);
+	}
+
 	unbind();
 }
 
