@@ -149,12 +149,17 @@ void Application::init()
 	std::shared_ptr<Entity> sponza = std::make_shared<Entity>(sponzaModel, glm::vec3(5.0f, 0.0f, 0.0f), "Sponza");
 	sponza->scale = glm::vec3(0.1f);
 
-	std::shared_ptr<Entity> light = std::make_shared<Entity>(m_sphereMesh, glm::vec3(5.0f, 0.0f, 0.0f), "Point Light");
+	std::shared_ptr<Entity> light = std::make_shared<Entity>(m_sphereMesh, glm::vec3(5.0f, 2.0f, 0.0f), "Point Light");
 	light->pointLight = std::make_shared<PointLight>();
 	light->scale = glm::vec3(0.2f);
+
+	std::shared_ptr<Entity> light2 = std::make_shared<Entity>(m_sphereMesh, glm::vec3(0.0f, 2.0f, 0.0f), "Point Light 2");
+	light2->pointLight = std::make_shared<PointLight>();
+	light2->scale = glm::vec3(0.2f);
 	
 	scene->addEntity(sponza);
 	scene->addEntity(light);
+	scene->addEntity(light2);
 
 	m_renderer->setCurrentScene(std::move(scene));
 }
