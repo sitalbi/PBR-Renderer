@@ -5,7 +5,7 @@ It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org
 
 ***Note***: *this project is mainly a learning exercise and is not intended for production use. The goal was for me to have a project where I could try to design a renderer and its base architecture as well as implement various PBR techniques using OpenGL. It is not fully optimized for performance and can contain bugs.*
 
-## Images
+## Screenshots
 
 <p align="center">
   <img src="https://github.com/sitalbi/PBR-Renderer/blob/main/res/screenshots/screen1.png" width="650">
@@ -63,9 +63,7 @@ cmake --build . --config Release
 - After the build completes, the executable will be available in the build output directory. 
  
 ## TODO:
-- Hot reload for shaders
 - Deferred rendering
-- Scene save/load
 
 ## Credits:
 
