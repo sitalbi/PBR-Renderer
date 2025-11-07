@@ -63,6 +63,7 @@ cmake --build . --config Release
 - After the build completes, the executable will be available in the build output directory. 
  
 ## TODO:
+- Refactor to have clear separation between renderer and app logic
 - Deferred rendering
 
 ## Credits:
