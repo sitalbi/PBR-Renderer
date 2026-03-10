@@ -63,9 +63,12 @@ cmake --build . --config Release
 - After the build completes, the executable will be available in the build output directory. 
  
 ## TODO:
-- Priority : Refactor to have clear separation between renderer and app logic
-- Deferred rendering
-- Improve shadows (using CSM ?)
+- **Priority** : Refactor to have clear separation between renderer and app logic
+- improve render-pass architecture
+- improve shadows (using CSM ?)
+- add deferred rendering
+- add GI
+- add 2D support
 
 ## Credits:
 
