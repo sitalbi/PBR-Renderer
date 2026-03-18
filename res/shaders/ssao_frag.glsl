@@ -14,7 +14,7 @@ uniform vec3 samples[kernelSize];
 
 
 uniform mat4 projection;     
-const vec2 noiseScale = vec2(1920.0/4.0, 1080.0/4.0); // TODO: might use uniform
+uniform vec2 noiseScale;
 
 const float radius = 0.5;
 
@@ -25,17 +25,12 @@ void main()
     vec3 normal = normalize(texture(gNormal, TexCoords).rgb); // Normal in view space
     
     // Get a random vector from the noise texture in the range [-1,1]
-    vec3 randomVec = normalize(texture(noiseTexture, TexCoords * noiseScale).xyz);
+    vec3 randomVec = normalize(texture(noiseTexture, TexCoords * noiseScale).xyz * 2.0 - 1.0);
     
-    // Create a TBN matrix (tangent, bitangent, normal) to reorient the sample kernel (similar to the TBN matrix in PBR)
+    // Create a TBN matrix (tangent, bitangent, normal) to reorient the sample kernel
     vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
     vec3 bitangent = cross(normal, tangent);
     mat3 TBN = mat3(tangent, bitangent, normal);
-
-    vec4 screenPos = vec4(fragPos, 1.0);
-    screenPos = projection * screenPos; // from view to clip-space
-    screenPos.xyz /= screenPos.w; // perspective divide
-    screenPos.xyz = screenPos.xyz * 0.5 + 0.5; // transform to range [0,1]
     
     // Occlusion factor calculation
     float occlusion = 0.0;
@@ -54,7 +49,6 @@ void main()
         occlusion += (sampleDepth >= sampleVec.z + 0.001 ? 1.0 : 0.0) * rangeCheck;
     }
     
-
     occlusion = 1.0 - (occlusion / float(kernelSize));
     FragColor = occlusion;
 }

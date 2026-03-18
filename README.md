@@ -1,77 +1,116 @@
-﻿# Physically Based Renderer
+﻿# PBR Renderer
 
-This is a simple 3D Real Time physically based renderer written in C++ with OpenGL.
-It implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org/wiki/Specular_highlight#Cook%E2%80%93Torrance_model) to simulate the reflection of light on a surface.
+A real-time physically based renderer written in C++ and OpenGL.
 
-***Note***: *this project is mainly a learning exercise and is not intended for production use. The goal was for me to have a project where I could try to design a renderer and its base architecture as well as implement various PBR techniques using OpenGL. It is not fully optimized for performance and can contain bugs.*
+This project implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org/wiki/Specular_highlight#Cook%E2%80%93Torrance_model) and focuses on building a clean and modular rendering architecture.
+
+> **Note**  
+> This project is primarily a learning and experimentation project.  
+> The goal is to explore rendering techniques and renderer/software architecture design rather than provide a production-ready engine.  
+> It is not fully optimized yet and may contain bugs.
+
+---
+
+## Architecture
+
+The project is split into two main components:
+
+
+- **renderer/**  
+  Contains the rendering backend (OpenGL abstraction, materials, render passes, etc.).  
+  Designed to be reusable and integrated into other projects.
+
+- **app/**  
+  A lightweight application used to test and visualize the renderer.  
+  Handles scene setup, camera, UI (ImGui), and model loading.
+
+
 
 ## Screenshots
 
 <p align="center">
-  <img src="https://github.com/sitalbi/PBR-Renderer/blob/main/res/screenshots/screen1.png" width="650">
-  <img src="https://github.com/sitalbi/PBR-Renderer/blob/main/res/screenshots/screen2.png" width="650">
-  <img src="https://github.com/sitalbi/PBR-Renderer/blob/main/res/screenshots/screen3.png" width="650">
-  <img src="https://github.com/sitalbi/PBR-Renderer/blob/main/res/screenshots/screen4.png" width="650">
-  <img src="https://github.com/sitalbi/PBR-Renderer/blob/main/res/screenshots/screen5.png" width="650">
+ <img src="https://raw.githubusercontent.com/sitalbi/PBR-Renderer/main/res/screenshots/screen1.png" width="650">
+  <img src="https://raw.githubusercontent.com/sitalbi/PBR-Renderer/main/res/screenshots/screen2.png" width="650">
+  <img src="https://raw.githubusercontent.com/sitalbi/PBR-Renderer/main/res/screenshots/screen3.png" width="650">
+  <img src="https://raw.githubusercontent.com/sitalbi/PBR-Renderer/main/res/screenshots/screen4.png" width="650">
+  <img src="https://raw.githubusercontent.com/sitalbi/PBR-Renderer/main/res/screenshots/screen5.png" width="650">
 </p>
 
-## Features:
-- Cook-Torrance BRDF model
-- Material system with texture support
-- Forward rendering
-- Diffuse and Specular IBL (Image Based Lighting)
-- HDRI skyboxes for environment lighting
-- Model loading with Assimp
-- SSAO (Screen Space Ambient Occlusion)
-- HDR Bloom
-- Directional light and point lights
-- Shadows using shadow mapping (for both directional and point lights)
-- Camera: free movement camera and orbit camera
 
-## Build Instructions:
-### Requirements 
-Before building, make sure you have the following installed: 
-- CMake ≥ 3.20 
-- C++ 20 compatible compiler (e.g. g++ 11+, MSVC 2019+, or clang 13+) 
 
-### Dependencies 
-This project uses the following external libraries as submodules: 
+## Features
+- **renderer**
+	- Cook-Torrance BRDF (PBR)
+	- Material system with texture support
+	- Forward rendering pipeline
+	- HDR environment maps / skyboxes with Image-Based Lighting (Diffuse + Specular IBL)
+	- Post-processing: SSAO (Screen Space Ambient Occlusion), HDR bloom
+	- Directional and point lights
+	- Shadow mapping (directional + point lights)
+- **app**
+	- Model loading via Assimp
+	- Free camera + orbit camera
+
+---
+
+## Build Instructions
+
+### Requirements
+
+- CMake ≥ 3.20  
+- C++20 compatible compiler  
+  - GCC 11+  
+  - Clang 13+  
+  - MSVC 2019+  
+
+---
+
+### Dependencies
+
+Dependencies included as git submodules:
+
 - [GLFW](https://www.glfw.org/)
 - [GLAD](https://glad.dav1d.de/)
 - [glm](https://github.com/g-truc/glm)
 - [Assimp](https://github.com/assimp/assimp)
 - [imgui](https://github.com/ocornut/imgui)
 - [stb](https://github.com/nothings/stb)
-- [magic_enum](https://github.com/Neargye/magic_enum) 
- 
-### How to Build 
-- Create a build directory 
-```
-mkdir build && cd build
-```
-- Generate build files (e.g. for Visual Studio, use -G "Visual Studio 17 2022") 
-```
-cmake .. 
-```
-- Build the project 
-```
-cmake --build . --config Release
+- [magic_enum](https://github.com/Neargye/magic_enum)
+
+---
+
+### Build 
+```bash
+cmake -B out -S .
+cmake --build out --config Release
 ```
 
 > *Use `--config Debug` for debug builds*
 
-- After the build completes, the executable will be available in the build output directory. 
- 
-## TODO:
-- **Priority** : Refactor to have clear separation between renderer and app logic
-- improve render-pass architecture
-- improve shadows (using CSM ?)
-- add deferred rendering
-- add GI
-- add 2D support
+The executable (renderer_app) will be generated in the output directory.
 
-## Credits:
+## Usage as a Library
 
-- learnopengl.com (https://learnopengl.com/)
-- john-chapman-graphics blog (http://john-chapman-graphics.blogspot.com/2013/01/ssao-tutorial.html)
+The renderer is built as a CMake library (pbr_renderer) and can be reused in other projects.
+
+### Example usage in another CMake project:
+```cmake
+add_subdirectory(path/to/PBR-Renderer/renderer)
+target_link_libraries(my_app PRIVATE pbr_renderer)
+```
+
+## TODO
+
+- Deferred rendering pipeline
+
+- Improve shadows (using CSM?)
+
+- Improve render pass system
+
+- GPU performance optimizations
+
+## Credits
+
+Assets:
+
 - PBR Kabuto [Samurai Helmet](https://sketchfab.com/3d-models/pbr-kabuto-samurai-helmet-13b3ab49b6bd4247be36b54ba1a56d8a) by [LeahLindner](https://sketchfab.com/illation) licensed under CC-BY-NC-ND-4.0 (http://creativecommons.org/licenses/by-nc-nd/4.0/)

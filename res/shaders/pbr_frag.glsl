@@ -36,13 +36,6 @@ uniform samplerCube pointShadowMaps[MAX_POINT_LIGHTS];
 
 // PBR material
 struct Material {
-    bool useAlbedoTexture;
-    bool useMetallicTexture;
-    bool useRoughnessTexture;
-    bool useAoTexture;
-    bool useNormalTexture;
-    bool useEmissiveTexture;
-
     vec3 albedo;
     float metallic;
     float roughness;
@@ -155,38 +148,19 @@ float ShadowPointLight(int index, vec3 fragPos, vec3 lightPos)
 void main()
 {
     // Material properties calculation
-    vec3 albedo = material.albedo;
-    if(material.useAlbedoTexture) {
-        albedo = pow(texture(material.albedoMap, TexCoords).rgb, vec3(2.2));
-    }
+    vec3 albedo = material.albedo *  pow(texture(material.albedoMap, TexCoords).rgb, vec3(2.2));
 
-    float metallic = material.metallic;
-    if(material.useMetallicTexture) {
-        metallic = texture(material.metallicMap, TexCoords).r;
-    }
+    float metallic = material.metallic * texture(material.metallicMap, TexCoords).r;
 
-    float roughness = material.roughness;
-    if(material.useRoughnessTexture) {
-        roughness = texture(material.roughnessMap, TexCoords).r;
-    }
+    float roughness = material.roughness * texture(material.roughnessMap, TexCoords).r;
 
-    float ao = material.ao;
-    if(material.useAoTexture) {
-        ao = texture(material.aoMap, TexCoords).r;
-    }
+    float ao = material.ao * texture(material.aoMap, TexCoords).r;
 
-    // Emissive
-    vec3 emissive = material.emissiveColor;
-    if(material.useEmissiveTexture) {
-        emissive = texture(material.emissiveMap, TexCoords).rgb;
-    }
-    
-    vec3 N = normalize(Normal);
-    if (material.useNormalTexture) {
-        vec3 tangentNormal = texture(material.normalMap, TexCoords).rgb;
-        tangentNormal = tangentNormal * 2.0 - 1.0;
-        N = normalize(TBN * tangentNormal);
-    }
+    vec3 emissive = material.emissiveColor * texture(material.emissiveMap, TexCoords).rgb;
+
+    vec3 tangentNormal = texture(material.normalMap, TexCoords).rgb;
+    tangentNormal = tangentNormal * 2.0 - 1.0;
+    vec3 N = normalize(TBN * tangentNormal);
 
     vec3 viewSpaceN = normalize(mat3(VM) * N); // transform normal to view space for output gNormal
 
