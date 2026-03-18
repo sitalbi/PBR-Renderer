@@ -4,7 +4,6 @@ A real-time physically based renderer written in C++ and OpenGL.
 
 This project is primarily a learning and experimentation project. The goal is to explore rendering techniques and renderer/software architecture design rather than provide a production-ready engine. It is not fully optimized yet and may contain bugs.
 
----
 
 ## Architecture
 
@@ -46,7 +45,6 @@ The project is split into two main components:
 	- Model loading via Assimp
 	- Free camera + orbit camera
 
----
 
 ## Build Instructions
 
@@ -58,7 +56,6 @@ The project is split into two main components:
   - Clang 13+  
   - MSVC 2019+  
 
----
 
 ### Dependencies
 
@@ -72,7 +69,6 @@ Dependencies included as git submodules:
 - [stb](https://github.com/nothings/stb)
 - [magic_enum](https://github.com/Neargye/magic_enum)
 
----
 
 ### Build 
 ```bash
