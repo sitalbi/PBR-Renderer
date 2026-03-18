@@ -2,12 +2,7 @@
 
 A real-time physically based renderer written in C++ and OpenGL.
 
-This project implements the [Cook-Torrance BRDF microfacet model](https://en.wikipedia.org/wiki/Specular_highlight#Cook%E2%80%93Torrance_model) and focuses on building a clean and modular rendering architecture.
-
-> **Note**  
-> This project is primarily a learning and experimentation project.  
-> The goal is to explore rendering techniques and renderer/software architecture design rather than provide a production-ready engine.  
-> It is not fully optimized yet and may contain bugs.
+This project is primarily a learning and experimentation project. The goal is to explore rendering techniques and renderer/software architecture design rather than provide a production-ready engine. It is not fully optimized yet and may contain bugs.
 
 ---
 
