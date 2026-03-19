@@ -80,16 +80,6 @@ cmake --build out --config Release
 
 The executable (renderer_app) will be generated in the output directory.
 
-## Usage as a Library
-
-The renderer is built as a CMake library (pbr_renderer) and can be reused in other projects.
-
-### Example usage in another CMake project:
-```cmake
-add_subdirectory(path/to/PBR-Renderer/renderer)
-target_link_libraries(my_app PRIVATE pbr_renderer)
-```
-
 ## TODO
 
 - Deferred rendering pipeline
