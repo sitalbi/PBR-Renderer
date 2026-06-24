@@ -41,8 +41,11 @@ private:
 	Scene m_currentScene;
 
 	std::shared_ptr<Model> m_sphereModel;
+	std::shared_ptr<Model> m_cubeModel;
 
 	MaterialHandle m_defaultMaterial = 0;
+
+	Entity* selectedEntity = nullptr;
 	
 	std::vector<const char*> m_meshTypes;
 	int m_meshTypeIndex = 0;
@@ -60,6 +63,8 @@ private:
 	void setupImGuiStyle();
 
 	void onPressedKey(int key, const std::function<void()>& callback);
+
+	void updateGizmo();
 
 	void setDockingSpace();
 };

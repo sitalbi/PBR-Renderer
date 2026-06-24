@@ -9,6 +9,7 @@
 #include <imgui_internal.h>
 #include <filesystem>
 #include "ModelLoader.h"
+#include <ImGuizmo.h>
 
 Application::Application()
 {
@@ -93,28 +94,43 @@ void Application::init()
 	m_sphereModel = std::make_shared<Model>();
 	m_sphereModel->submeshes.push_back({ sphereMesh, m_defaultMaterial });
 
+	// Create cube
+	MeshHandle cubeMesh = m_renderer.createMesh(MeshFactory::makeCube(1.0f));
+
+	m_cubeModel = std::make_shared<Model>();
+	m_cubeModel->submeshes.push_back({ cubeMesh, m_defaultMaterial });
+
 	// Create Entities
-	std::shared_ptr<Entity> sphere = std::make_shared<Entity>(m_sphereModel, glm::vec3(0.0f, -2.0f, 0.0f), "Sphere");
-	std::shared_ptr<Entity> sphere2 = std::make_shared<Entity>(m_sphereModel, glm::vec3(3.0f, -2.0f, 0.0f), "Sphere2");
-
+	std::shared_ptr<Entity> sphere = std::make_shared<Entity>(m_sphereModel, glm::vec3(-2.0f, 0.0f, 0.0f), "Sphere");
+	std::shared_ptr<Entity> sphere2 = std::make_shared<Entity>(m_sphereModel, glm::vec3(2.0f, 0.0f, 0.0f), "Sphere2");
+	std::shared_ptr<Entity> cube = std::make_shared<Entity>(m_cubeModel, glm::vec3(0.0f, -2.0f, 0.0f), "Cube");
+	cube->scale = glm::vec3(10.0f, 0.1f, 10.0f);
 	// Add Entities to scene
-	m_currentScene.addEntity(sphere);
+	/*m_currentScene.addEntity(sphere);
+	m_currentScene.addEntity(sphere2);
+	m_currentScene.addEntity(cube);*/
 
-	Model sponza = ModelLoader::loadModel(RES_DIR"/models/sponza/sponza.obj", m_renderer);
+	/*Model sponza = ModelLoader::loadModel(RES_DIR"/models/sponza/sponza.obj", m_renderer);
 	std::shared_ptr<Entity> sponzaEntity = std::make_shared<Entity>(std::make_shared<Model>(sponza), glm::vec3(0.0f, 0.0f, 0.0f), "Sponza");
-	sponzaEntity->scale = glm::vec3(0.1f);
+	sponzaEntity->scale = glm::vec3(0.02f);*/
 
+	//m_currentScene.addEntity(sponzaEntity);
 
-	m_currentScene.addEntity(sponzaEntity);
+	Model kabuto = ModelLoader::loadModel(RES_DIR"/models/pbr_kabuto_samurai_helmet/kabuto.gltf", m_renderer);
+	//Model grunt = ModelLoader::loadModel(RES_DIR"/models/UnitTroopWFGrunt/UnitTroopWFGrunt.bgf.obj", m_renderer);
+	std::shared_ptr<Entity> kabutoEntity = std::make_shared<Entity>(std::make_shared<Model>(kabuto), glm::vec3(0.0f, 0.0f, 0.0f), "Kabuto");
+	//std::shared_ptr<Entity> gruntEntity = std::make_shared<Entity>(std::make_shared<Model>(grunt), glm::vec3(0.0f, 0.0f, 0.0f), "Grunt");
+
+	m_currentScene.addEntity(kabutoEntity);
 
 	PointLightData data;
 	data.color = glm::vec3(1.f);
 	data.position = glm::vec3(0.f, 5.f, 0.f);
 	data.intensity = 100.f;
 	
-	PointLightHandle pointLight = m_renderer.createPointLight(data);
+	//PointLightHandle pointLight = m_renderer.createPointLight(data);
 
-	m_currentScene.addPointLight(pointLight);
+	//m_currentScene.addPointLight(pointLight);
 }
 
 void Application::shutdown()
@@ -144,7 +160,7 @@ void Application::updateUI()
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-
+	ImGuizmo::BeginFrame();
 
 	// Info Panel 
 	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
@@ -269,6 +285,21 @@ void Application::updateUI()
 					m_camera.setTarget(entity);
 				}
 			}
+			if (selectedEntity != entity.get())
+			{
+				if (ImGui::Button("Select"))
+				{
+					selectedEntity = entity.get();
+				}
+			}
+			else
+			{
+				if (ImGui::Button("Unselect"))
+				{
+					selectedEntity = nullptr;
+				}
+			}
+
 			if (ImGui::Button("Delete Entity")) {
 				m_currentScene.deleteEntity(entity);
 			}
@@ -312,7 +343,6 @@ void Application::updateUI()
 		isAddingEntity = true;  
 	}
 
-	ImGui::End();
 
 	if (isAddingEntity) {
 
@@ -361,6 +391,12 @@ void Application::updateUI()
 		}
 		ImGui::End();
 	}
+
+	ImGui::End();
+
+	updateGizmo();
+
+	ImGui::Render();
 }
 
 void Application::update(float deltaTime)
@@ -565,4 +601,51 @@ void Application::onPressedKey(int key, const std::function<void()>& callback)
 	}
 	m_keyStates[key] = isPressed;
 
+}
+
+void Application::updateGizmo()
+{
+	if (!selectedEntity)
+	{
+		return;
+	}
+
+	ImGuizmo::SetOrthographic(false);
+	ImGuizmo::SetDrawlist(ImGui::GetForegroundDrawList());
+
+	ImGuiIO& io = ImGui::GetIO();
+
+	ImGuizmo::SetRect(0.0f, 0.0f, io.DisplaySize.x, io.DisplaySize.y);
+
+	glm::mat4 view = m_camera.getViewMatrix();
+	glm::mat4 projection = m_camera.getProjectionMatrix();
+	glm::mat4 transform = glm::translate(glm::mat4(1.0f), selectedEntity->position);
+	transform *= glm::mat4_cast(glm::quat(glm::radians(selectedEntity->rotation)));
+	transform = glm::scale(transform, selectedEntity->scale);
+
+	ImGuizmo::Manipulate(
+		glm::value_ptr(view),
+		glm::value_ptr(projection),
+		ImGuizmo::TRANSLATE | ImGuizmo::ROTATE_X | ImGuizmo::ROTATE_Y | ImGuizmo::ROTATE_Z | ImGuizmo::SCALE,
+		ImGuizmo::WORLD,
+		glm::value_ptr(transform)
+	);
+
+	if (ImGuizmo::IsUsing())
+	{
+		float translation[3];
+		float rotation[3];
+		float scale[3];
+
+		ImGuizmo::DecomposeMatrixToComponents(
+			glm::value_ptr(transform),
+			translation,
+			rotation,
+			scale
+		);
+
+		selectedEntity->position = glm::vec3(translation[0], translation[1], translation[2]);
+		selectedEntity->rotation = glm::vec3(rotation[0], rotation[1], rotation[2]);
+		selectedEntity->scale = glm::vec3(glm::max(0.001f, (scale[0] + scale[1] + scale[2]) / 3.0f));
+	}
 }

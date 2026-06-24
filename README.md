@@ -90,8 +90,6 @@ The executable (renderer_app) will be generated in the output directory.
 
 - GPU performance optimizations
 
-- implement different tone mappers for more customization
-
 ## Credits
 
 Assets:

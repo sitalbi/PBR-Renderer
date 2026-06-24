@@ -359,8 +359,8 @@ void Renderer::render(const RenderData& renderData)
 {
 	glm::vec3 lightDir = glm::normalize(renderData.directionalLight.lightDir);
 
-	glm::mat4 lightSpaceMatrix = glm::ortho(-35.0f, 35.0f, -35.0f, 35.0f, 0.1f, 75.0f);
-	glm::vec3 lightPos = lightDir * 10.0f;
+	glm::mat4 lightSpaceMatrix = glm::ortho(-35.0f, 35.0f, -35.0f, 35.0f, 0.1f, 300.0f);
+	glm::vec3 lightPos = lightDir * 75.0f;
 	lightSpaceMatrix *= glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	// Background pass
@@ -636,6 +636,7 @@ void Renderer::render(const RenderData& renderData)
 	glBindTexture(GL_TEXTURE_2D, m_backgroundFB->textures[0]); // background
 	m_finalCompoShader->setUniform1i("backgroundTexture", 18);
 	m_finalCompoShader->setUniform1f("exposure", renderData.directionalLight.exposure);
+	m_finalCompoShader->setUniform1i("toneMappingMode", 2);
 
 	if (useBloom)
 	{

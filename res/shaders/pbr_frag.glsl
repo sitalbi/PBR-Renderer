@@ -76,34 +76,33 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness);
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-
-    if(projCoords.z > 1.0) return 0.0; // outside of light frustum
-
     projCoords = projCoords * 0.5 + 0.5;
 
-    float closestDepth = texture(shadowMap, projCoords.xy).r; 
+    if (projCoords.x < 0.0 || projCoords.x > 1.0 ||
+        projCoords.y < 0.0 || projCoords.y > 1.0 ||
+        projCoords.z > 1.0)
+    {
+        return 0.0;
+    }
 
     float currentDepth = projCoords.z;
+    float bias = max(0.025 * (1.0 - dot(Normal, lightDir)), 0.0005);
 
-    float bias = max(0.025 * (1.0 - dot(Normal, lightDir)), 0.0005); 
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
 
-    //float shadow = currentDepth -bias > closestDepth  ? 1.0 : 0.0;
-
-    // PCF 
     float shadow = 0.0;
-    const float kernelSize = 4.0;
-    for(int x = -1; x <= 1; ++x) {
-        for(int y = -1; y <= 1; ++y) {
-            float pcfX = float(x) / kernelSize;
-            float pcfY = float(y) / kernelSize;
-            vec2 texCoords = projCoords.xy + vec2(pcfX, pcfY) * bias;
-            float sampleDepth = texture(shadowMap, texCoords).r;
-            shadow += currentDepth - bias > sampleDepth ? 1.0 : 0.0;
+    for(int x = -1; x <= 1; ++x)
+    {
+        for(int y = -1; y <= 1; ++y)
+        {
+            float sampleDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+            shadow += (currentDepth - bias > sampleDepth) ? 1.0 : 0.0;
         }
     }
-    shadow /= 9.0; // average the samples
-    return shadow; 
-}  
+    shadow /= 9.0;
+
+    return shadow;
+}
 
 vec3 sampleOffsetDirections[20] = vec3[](
     vec3( 1, 1, 1), vec3(-1, 1, 1), vec3( 1,-1, 1), vec3(-1,-1, 1),

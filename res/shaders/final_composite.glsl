@@ -9,6 +9,44 @@ uniform float exposure;
 
 uniform bool useBloom; 
 
+uniform int toneMappingMode; 
+
+vec3 defaultToneMapping(vec3 x)
+{
+    vec3 hdrCombined = x;
+    vec3 toneMappedScene = vec3(1.0) - exp(-hdrCombined * exposure);
+    
+    return toneMappedScene;
+}
+
+vec3 acesToneMapping(vec3 x)
+{
+    x *= exposure;
+
+    const float a = 2.51;
+    const float b = 0.03;
+    const float c = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
+
+    return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+}
+
+vec3 reinhardToneMapping(vec3 x)
+{
+    return x / (x + vec3(1.0));
+}
+
+vec3 applyToneMapping(vec3 color)
+{
+    if (toneMappingMode == 0)
+        return defaultToneMapping(color);
+    else if (toneMappingMode == 1)
+        return reinhardToneMapping(color);
+    else
+        return acesToneMapping(color);
+}
+
 void main()
 {
     vec4 backgroundColor = texture(backgroundTexture, TexCoords);
@@ -21,11 +59,7 @@ void main()
         combinedColor += bloomColor;
     }
     
-    // Tone mapping
-    vec3 hdrCombined = combinedColor;
-    vec3 toneMappedScene = vec3(1.0) - exp(-hdrCombined * exposure);
-    
-    vec3 result = toneMappedScene;
+    vec3 result = applyToneMapping(combinedColor);
     
     // Gamma correction
     result = pow(result, vec3(1.0 / 2.2));
