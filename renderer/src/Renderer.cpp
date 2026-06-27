@@ -54,11 +54,11 @@ void Renderer::init()
 
 	m_depthShader = std::make_shared<Shader>(RES_DIR "/shaders/depth_vert.glsl", RES_DIR "/shaders/empty_frag.glsl");
 	m_pointDepthShader = std::make_shared<Shader>(RES_DIR "/shaders/point_depth_vert.glsl", RES_DIR "/shaders/point_depth_frag.glsl");
-	m_lightingShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/quad_frag.glsl");
+	m_forwardCompositeShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/quad_frag.glsl");
 	m_ssaoShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/ssao_frag.glsl");
 	m_ssaoBlurShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/ssao_blur_frag.glsl");
 	m_brightShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/bright_frag.glsl");
-	m_finalCompoShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/final_composite.glsl");
+	m_finalCompositeShader = std::make_unique<Shader>(RES_DIR "/shaders/quad_vert.glsl", RES_DIR "/shaders/final_composite.glsl");
 
 	// Initialize Background framebuffer
 	m_backgroundFB = std::make_unique<Framebuffer>(m_renderTargetResolution.width, m_renderTargetResolution.height);
@@ -357,17 +357,54 @@ void Renderer::updateLighting(const RenderDirectionalLight& light)
 
 void Renderer::render(const RenderData& renderData)
 {
-	glm::vec3 lightDir = glm::normalize(renderData.directionalLight.lightDir);
-
-	glm::mat4 lightSpaceMatrix = glm::ortho(-35.0f, 35.0f, -35.0f, 35.0f, 0.1f, 300.0f);
-	glm::vec3 lightPos = lightDir * 75.0f;
-	lightSpaceMatrix *= glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	FrameContext frame = buildFrameContext(renderData);
 
 	// Background pass
+	renderBackgroundPass(renderData, frame);
+
+	// Depth pass
+	renderShadowDepthPass(renderData, frame);
+
+	// Point Light view depth pass
+	renderPointShadowPass(renderData);
+
+	// Geometry pass
+	renderForwardGeometryPass(renderData, frame);
+
+	// SSAO
+	renderSSAOPass(renderData);
+
+	// Composite pass
+	renderForwardCompositePass();
+	
+	// Final composite pass
+	renderFinalCompositePass(renderData);
+}
+
+FrameContext Renderer::buildFrameContext(const RenderData& renderData)
+{
+	FrameContext frame;
+	frame.view = renderData.camera.viewMatrix;
+	frame.projection = renderData.camera.projectionMatrix;
+	frame.cameraPosition = renderData.camera.position;
+
+	frame.lightDir = glm::normalize(renderData.directionalLight.lightDir);
+	frame.lightSpaceMatrix = glm::ortho(-35.0f, 35.0f, -35.0f, 35.0f, 0.1f, 300.0f);
+	glm::vec3 lightPos = frame.lightDir * 75.0f;
+	frame.lightSpaceMatrix *= glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	
+	if (renderData.skybox)
+	{
+		frame.environment = &m_skyboxes.at(renderData.skybox);
+	}
+
+	return frame;
+}
+
+void Renderer::renderBackgroundPass(const RenderData& renderData, const FrameContext& frame)
+{
 	m_backgroundFB->bind();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	GLEnvironment& environment = m_skyboxes.at(renderData.skybox);
 
 	// Draw skybox
 	glDepthMask(GL_FALSE);  // Don't write to depth buffer
@@ -377,21 +414,27 @@ void Renderer::render(const RenderData& renderData)
 	m_skyboxShader->setUniformMat4f("projection", renderData.camera.projectionMatrix);
 	m_skyboxShader->setUniform1i("environmentMap", 0);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, environment.envCubemap);
+	if (frame.environment)
+	{
+		glBindTexture(GL_TEXTURE_CUBE_MAP, frame.environment->envCubemap);
+	}
 	glBindVertexArray(m_skyboxVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
 	glDepthMask(GL_TRUE);  // Re-enable depth writing
 	m_backgroundFB->unbind();
 
-	// Depth pass
+}
+
+void Renderer::renderShadowDepthPass(const RenderData& renderData, const FrameContext& frame)
+{
 	m_depthFB->bind();
 	glViewport(0, 0, 4096, 4096); // TODO use variables for width and height
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
 	m_depthShader->bind();
-	m_depthShader->setUniformMat4f("lightSpaceMatrix", lightSpaceMatrix);
+	m_depthShader->setUniformMat4f("lightSpaceMatrix", frame.lightSpaceMatrix);
 	for (const auto& renderMesh : renderData.meshes)
 	{
 		m_depthShader->setUniformMat4f("model", renderMesh.transform);
@@ -402,8 +445,119 @@ void Renderer::render(const RenderData& renderData)
 	}
 	m_depthFB->unbind();
 	glViewport(0, 0, m_renderTargetResolution.width, m_renderTargetResolution.height); // reset viewport
+}
 
-	// Point Light view depth pass
+void Renderer::renderForwardGeometryPass(const RenderData& renderData, const FrameContext& frame)
+{
+	if (useAA) 
+	{
+		m_geometryFB_MSAA->bind();
+	}
+	else 
+	{
+		m_geometryFB->bind();
+	}
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glm::vec3 camPos = renderData.camera.position;
+	m_pbrShader->bind();
+	m_pbrShader->setUniform3f("camPos", camPos.x, camPos.y, camPos.z);
+	m_pbrShader->setUniformMat4f("lightSpaceMatrix", frame.lightSpaceMatrix);
+	m_pbrShader->setUniformMat4f("view", renderData.camera.viewMatrix);
+	m_pbrShader->setUniformMat4f("projection", renderData.camera.projectionMatrix);
+	m_pbrShader->setUniformVec3f("lightDir", frame.lightDir);
+	m_pbrShader->setUniform1f("ambientIntensity", renderData.directionalLight.ambientIntensity);
+	m_pbrShader->setUniform1f("lightIntensity", renderData.directionalLight.lightIntensity);
+	m_pbrShader->setUniformVec3f("lightColor", renderData.directionalLight.color);
+	glActiveTexture(GL_TEXTURE19);
+	glBindTexture(GL_TEXTURE_2D, m_depthFB->depthTexture);
+	m_pbrShader->setUniform1i("shadowMap", 19);
+
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+
+	if (frame.environment) {
+		// IBL textures
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, frame.environment->irradianceMap);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, frame.environment->prefilterMap);
+
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, m_brdfLUTTexture);
+
+		// Set IBL uniforms
+		m_pbrShader->bind();
+		m_pbrShader->setUniform1i("irradianceMap", 0);
+		m_pbrShader->setUniform1i("prefilterMap", 1);
+		m_pbrShader->setUniform1i("brdfLUT", 2);
+	}
+
+	// Set point lights uniforms
+	m_pbrShader->setUniform1i("numPointLights", renderData.lights.size());
+	for (int i = 0; i < renderData.lights.size(); i++)
+	{
+		PointLightHandle handle = renderData.lights[i];
+		const GLPointLight& pointLight = m_pointLights.at(handle);
+		std::string idx = "pointLights[" + std::to_string(i) + "]";
+		m_pbrShader->setUniformVec3f(idx + ".position", pointLight.position);
+		m_pbrShader->setUniformVec3f(idx + ".color", pointLight.color);
+		m_pbrShader->setUniform1f(idx + ".intensity", pointLight.intensity);
+		m_pbrShader->setUniform1f(idx + ".constant", pointLight.constant);
+		m_pbrShader->setUniform1f(idx + ".linear", pointLight.linear);
+		m_pbrShader->setUniform1f(idx + ".quadratic", pointLight.quadratic);
+		m_pbrShader->setUniform1f(idx + ".farPlane", pointLight.farPlane);
+
+		glActiveTexture(GL_TEXTURE20 + i);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, pointLight.shadowCubemap);
+		m_pbrShader->setUniform1i("pointShadowMaps[" + std::to_string(i) + "]", 20 + i);
+	}
+
+	for (const auto& renderMesh : renderData.meshes)
+	{
+		m_pbrShader->setUniformMat4f("model", renderMesh.transform);
+		const GLMesh& mesh = m_meshes.at(renderMesh.mesh);
+		const GLMaterial& material = m_materials.at(renderMesh.material);
+
+		bindMaterial(*m_pbrShader, material);
+
+		glBindVertexArray(mesh.vao);
+		glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, 0);
+	}
+
+	if (useAA) {
+		// Resolve MSAA FBO to single sample FBO
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_geometryFB_MSAA->fbo);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_geometryFB->fbo);
+
+		// Blit each color attachment
+		for (unsigned int i = 0; i < m_geometryFB->textures.size(); ++i)
+		{
+			glReadBuffer(GL_COLOR_ATTACHMENT0 + i);
+			glDrawBuffer(GL_COLOR_ATTACHMENT0 + i);
+
+			glBlitFramebuffer(0, 0, m_renderTargetResolution.width, m_renderTargetResolution.height,
+				0, 0, m_renderTargetResolution.width, m_renderTargetResolution.height,
+				GL_COLOR_BUFFER_BIT, GL_NEAREST);
+		}
+
+		// Restore draw buffers for single-sample FBO (needed when switching back to it)
+		{
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_geometryFB->fbo);
+
+			std::vector<GLenum> bufs(m_geometryFB->textures.size());
+			for (size_t i = 0; i < bufs.size(); ++i) {
+				bufs[i] = GL_COLOR_ATTACHMENT0 + (GLenum)i;
+			}
+			glDrawBuffers((GLsizei)bufs.size(), bufs.data());
+
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		}
+	}
+}
+
+void Renderer::renderPointShadowPass(const RenderData& renderData)
+{
 	glDisable(GL_CULL_FACE);
 	for (auto& renderLight : renderData.lights)
 	{
@@ -445,117 +599,12 @@ void Renderer::render(const RenderData& renderData)
 	}
 	glViewport(0, 0, m_renderTargetResolution.width, m_renderTargetResolution.height);
 	glEnable(GL_CULL_FACE);
+}
 
-
-	// Geometry pass
+void Renderer::renderSSAOPass(const RenderData& renderData)
+{
+	if (useSSAO) 
 	{
-		if (useAA) {
-			m_geometryFB_MSAA->bind();
-		}
-		else {
-			m_geometryFB->bind();
-		}
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glm::vec3 camPos = renderData.camera.position;
-		m_pbrShader->bind();
-		m_pbrShader->setUniform3f("camPos", camPos.x, camPos.y, camPos.z);
-		m_pbrShader->setUniformMat4f("lightSpaceMatrix", lightSpaceMatrix);
-		m_pbrShader->setUniformMat4f("view", renderData.camera.viewMatrix);
-		m_pbrShader->setUniformMat4f("projection", renderData.camera.projectionMatrix);
-		m_pbrShader->setUniformVec3f("lightDir", lightDir);
-		m_pbrShader->setUniform1f("ambientIntensity", renderData.directionalLight.ambientIntensity);
-		m_pbrShader->setUniform1f("lightIntensity", renderData.directionalLight.lightIntensity);
-		m_pbrShader->setUniformVec3f("lightColor", renderData.directionalLight.color);
-		glActiveTexture(GL_TEXTURE19);
-		glBindTexture(GL_TEXTURE_2D, m_depthFB->depthTexture);
-		m_pbrShader->setUniform1i("shadowMap", 19);
-
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-
-		if (renderData.skybox) {
-			// IBL textures
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_CUBE_MAP, environment.irradianceMap);
-
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_CUBE_MAP, environment.prefilterMap);
-
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, m_brdfLUTTexture);
-
-			// Set IBL uniforms
-			m_pbrShader->bind();
-			m_pbrShader->setUniform1i("irradianceMap", 0);
-			m_pbrShader->setUniform1i("prefilterMap", 1);
-			m_pbrShader->setUniform1i("brdfLUT", 2);
-		}
-
-		// Set point lights uniforms
-		m_pbrShader->setUniform1i("numPointLights", renderData.lights.size());
-		for (int i = 0; i < renderData.lights.size(); i++)
-		{
-			PointLightHandle handle = renderData.lights[i];
-			const GLPointLight& pointLight = m_pointLights.at(handle);
- 			std::string idx = "pointLights[" + std::to_string(i) + "]";
-			m_pbrShader->setUniformVec3f(idx + ".position", pointLight.position);
-			m_pbrShader->setUniformVec3f(idx + ".color", pointLight.color);
-			m_pbrShader->setUniform1f(idx + ".intensity", pointLight.intensity);
-			m_pbrShader->setUniform1f(idx + ".constant", pointLight.constant);
-			m_pbrShader->setUniform1f(idx + ".linear", pointLight.linear);
-			m_pbrShader->setUniform1f(idx + ".quadratic", pointLight.quadratic);
-			m_pbrShader->setUniform1f(idx + ".farPlane", pointLight.farPlane);
-
-			glActiveTexture(GL_TEXTURE20 + i);
-			glBindTexture(GL_TEXTURE_CUBE_MAP, pointLight.shadowCubemap);
-			m_pbrShader->setUniform1i("pointShadowMaps[" + std::to_string(i) + "]", 20 + i);
-		}
-
-		for (const auto& renderMesh : renderData.meshes)
-		{
-			m_pbrShader->setUniformMat4f("model", renderMesh.transform);
-			const GLMesh& mesh = m_meshes.at(renderMesh.mesh);
-			const GLMaterial& material = m_materials.at(renderMesh.material);
-
-			bindMaterial(*m_pbrShader, material);
-
-			glBindVertexArray(mesh.vao);
-			glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, 0);
-		}
-
-		if (useAA) {
-			// Resolve MSAA FBO to single sample FBO
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, m_geometryFB_MSAA->fbo);
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_geometryFB->fbo);
-
-			// Blit each color attachment
-			for (unsigned int i = 0; i < m_geometryFB->textures.size(); ++i)
-			{
-				glReadBuffer(GL_COLOR_ATTACHMENT0 + i);
-				glDrawBuffer(GL_COLOR_ATTACHMENT0 + i);
-
-				glBlitFramebuffer(0, 0, m_renderTargetResolution.width, m_renderTargetResolution.height,
-					0, 0, m_renderTargetResolution.width, m_renderTargetResolution.height,
-					GL_COLOR_BUFFER_BIT, GL_NEAREST);
-			}
-
-			// Restore draw buffers for single-sample FBO (needed when switching back to it)
-			{
-				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_geometryFB->fbo);
-
-				std::vector<GLenum> bufs(m_geometryFB->textures.size());
-				for (size_t i = 0; i < bufs.size(); ++i) {
-					bufs[i] = GL_COLOR_ATTACHMENT0 + (GLenum)i;
-				}
-				glDrawBuffers((GLsizei)bufs.size(), bufs.data());
-
-				glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			}
-		}
-	}
-
-	// SSAO
-	if (useSSAO) {
 		m_ssaoFB->bind();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		m_ssaoShader->bind();
@@ -582,27 +631,32 @@ void Renderer::render(const RenderData& renderData)
 		m_ssaoBlurShader->setUniform1i("ssaoTexture", 12);
 		renderQuad();
 	}
+}
 
-	// Lighting pass
+void Renderer::renderForwardCompositePass()
+{
 	m_hdrFB->bind();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	m_lightingShader->bind();
+	m_forwardCompositeShader->bind();
 	glActiveTexture(GL_TEXTURE13);
 	glBindTexture(GL_TEXTURE_2D, m_geometryFB->textures[0]);
-	m_lightingShader->setUniform1i("screenTexture", 13);
+	m_forwardCompositeShader->setUniform1i("screenTexture", 13);
 	if (useSSAO) {
-		m_lightingShader->setUniform1i("useSSAO", 1);
+		m_forwardCompositeShader->setUniform1i("useSSAO", 1);
 	}
 	else {
-		m_lightingShader->setUniform1i("useSSAO", 0);
+		m_forwardCompositeShader->setUniform1i("useSSAO", 0);
 	}
 	glActiveTexture(GL_TEXTURE14);
 	glBindTexture(GL_TEXTURE_2D, m_ssaoBlurFB->textures[0]);
-	m_lightingShader->setUniform1i("ssaoTexture", 14);
+	m_forwardCompositeShader->setUniform1i("ssaoTexture", 14);
 	renderQuad();
-	m_lightingShader->unbind();
+	m_forwardCompositeShader->unbind();
 	m_hdrFB->unbind();
+}
 
+void Renderer::renderBloomPass()
+{
 	if (useBloom)
 	{
 		// Bright pass
@@ -620,39 +674,39 @@ void Renderer::render(const RenderData& renderData)
 		// Bloom pass
 		m_bloomRenderer->renderBloomTexture(m_brightFB->textures[0], bloomFilterRadius);
 	}
+}
 
-
-	// Final composite pass
-	//m_finalCompositeFB->bind();
+void Renderer::renderFinalCompositePass(const RenderData& renderData)
+{
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	glDisable(GL_BLEND);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	m_finalCompoShader->bind();
+	m_finalCompositeShader->bind();
 	glActiveTexture(GL_TEXTURE17);
 	glBindTexture(GL_TEXTURE_2D, m_hdrFB->textures[0]); // composite
-	m_finalCompoShader->setUniform1i("sceneTexture", 17);
+	m_finalCompositeShader->setUniform1i("sceneTexture", 17);
 	glActiveTexture(GL_TEXTURE18);
 	glBindTexture(GL_TEXTURE_2D, m_backgroundFB->textures[0]); // background
-	m_finalCompoShader->setUniform1i("backgroundTexture", 18);
-	m_finalCompoShader->setUniform1f("exposure", renderData.directionalLight.exposure);
-	m_finalCompoShader->setUniform1i("toneMappingMode", 2);
+	m_finalCompositeShader->setUniform1i("backgroundTexture", 18);
+	m_finalCompositeShader->setUniform1f("exposure", renderData.directionalLight.exposure);
+	m_finalCompositeShader->setUniform1i("toneMappingMode", 2);
 
 	if (useBloom)
 	{
-		m_finalCompoShader->setUniform1i("useBloom", 1);
+		m_finalCompositeShader->setUniform1i("useBloom", 1);
 		glActiveTexture(GL_TEXTURE16);
 		glBindTexture(GL_TEXTURE_2D, m_bloomRenderer->bloomTexture()); // bloom
-		m_finalCompoShader->setUniform1i("bloomTexture", 16);
+		m_finalCompositeShader->setUniform1i("bloomTexture", 16);
 	}
 	else {
-		m_finalCompoShader->setUniform1i("useBloom", 0);
+		m_finalCompositeShader->setUniform1i("useBloom", 0);
 	}
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	renderQuad();
-	m_finalCompoShader->unbind();
+	m_finalCompositeShader->unbind();
 	glDisable(GL_BLEND);
 	m_finalCompositeFB->unbind();
 }

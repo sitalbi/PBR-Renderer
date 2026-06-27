@@ -38,6 +38,19 @@ struct RenderSize {
     int height;
 };
 
+
+struct FrameContext
+{
+    glm::mat4 view;
+    glm::mat4 projection;
+    glm::vec3 cameraPosition;
+
+    glm::vec3 lightDir;
+    glm::mat4 lightSpaceMatrix;
+
+    const GLEnvironment* environment = nullptr;
+};
+
 class Renderer
 {
 public:
@@ -50,12 +63,9 @@ public:
 
 	void setLightColor(const glm::vec3& lightColor) { m_lightColor = lightColor; }
 
-
-	std::shared_ptr<Shader> getBasicShader() { return m_basicShader; }
-	std::shared_ptr<Shader> getPBRShader() { return m_pbrShader; }
-
 	void render(const RenderData& renderData);
-
+	
+    // Utilities functions, might move them out of the class later
     static void renderQuad() {
         if (quadVAO == 0)
         {
@@ -81,7 +91,6 @@ public:
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glBindVertexArray(0);
     }
-
     static void renderCube()
     {
         // initialize (if necessary)
@@ -155,7 +164,6 @@ public:
 
     SkyboxHandle createSkyboxFromHDR(const std::string& path);
     TextureHandle createTextureFromFile(const std::string& path);
-    GLTexture loadTextureFromFile(const char* path);
     PointLightHandle createPointLight(PointLightData data);
 
     void setupMesh(GLMesh& mesh, MeshData& meshDesc);
@@ -169,14 +177,12 @@ public:
     void editPointLight(PointLightHandle handle, const PointLightData& data);
     PointLightData getPointLightData(PointLightHandle handle);
 
-
+public:
 	bool useSSAO = true;
 	bool useBloom = true;
 	bool useAA = true;
 
     float bloomFilterRadius = 0.0025f;
-
-
 
     RenderSize m_renderTargetResolution{ 1920,1080 };
 
@@ -186,6 +192,28 @@ public:
     static constexpr int ROUGH_TEXTURE_UNIT = 7;
     static constexpr int AO_TEXTURE_UNIT = 8;
     static constexpr int EMISSIVE_TEXTURE_UNIT = 9;
+
+private:
+    void clear();
+    
+    void bindMaterial(const Shader& shader, const GLMaterial& material);
+    
+    unsigned int createSolidTextureRGBA8(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+    
+    void initSkybox();
+    unsigned int loadHDRImage(std::string path);
+    GLTexture loadTextureFromFile(const char* path);
+    GLEnvironment buildEnvironmentMaps(unsigned int hdrTexture);
+    
+    FrameContext buildFrameContext(const RenderData& renderData);
+    void renderBackgroundPass(const RenderData& renderData, const FrameContext& frame);
+    void renderShadowDepthPass(const RenderData& renderData, const FrameContext& frame);
+    void renderForwardGeometryPass(const RenderData& renderData, const FrameContext& frame);
+    void renderPointShadowPass(const RenderData& renderData);
+    void renderSSAOPass(const RenderData& renderData);
+    void renderForwardCompositePass();
+    void renderBloomPass();
+    void renderFinalCompositePass(const RenderData& renderData);
 
 private:
     static unsigned int cubeVAO;
@@ -211,11 +239,11 @@ private:
 	std::shared_ptr<Shader> m_depthShader;
 	std::shared_ptr<Shader> m_pointDepthShader;
 	std::shared_ptr<Shader> m_pbrShader;
-	std::unique_ptr<Shader> m_lightingShader;
+	std::unique_ptr<Shader> m_forwardCompositeShader;
 	std::unique_ptr<Shader> m_ssaoShader;
 	std::unique_ptr<Shader> m_ssaoBlurShader;
 	std::unique_ptr<Shader> m_brightShader;
-	std::unique_ptr<Shader> m_finalCompoShader;
+	std::unique_ptr<Shader> m_finalCompositeShader;
 	std::unique_ptr<Shader> m_skyboxShader;
 
     // Skybox ibl shaders
@@ -252,17 +280,6 @@ private:
     // Default meshes
     MeshHandle cubeMeshHandle;
     MeshHandle sphereMeshHandle;
-
-	void clear();
-
-    void bindMaterial(const Shader& shader, const GLMaterial& material);
-
-    unsigned int createSolidTextureRGBA8(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-
-    void initSkybox();
-    unsigned int loadHDRImage(std::string path);
-    GLEnvironment buildEnvironmentMaps(unsigned int hdrTexture);
-
 };
 
 struct BloomMip
